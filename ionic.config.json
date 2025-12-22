@@ -1,5 +1,7 @@
 {
   "name": "smart-mirror-mobile",
-  "integrations": {},
-  "type": "angular"
+  "type": "angular",
+  "integrations": {
+    "capacitor": {}
+  }
 }

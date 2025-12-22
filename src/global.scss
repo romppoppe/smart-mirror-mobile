@@ -35,3 +35,48 @@
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
 @import "@ionic/angular/css/palettes/dark.system.css";
+
+/* ===== MODO ACCESIBILIDAD - TEXTO GRANDE ===== */
+
+body.large-text {
+  font-size: 18px;
+}
+
+body.large-text ion-title {
+  font-size: 20px;
+}
+
+body.large-text ion-card-title {
+  font-size: 20px;
+}
+
+body.large-text ion-card-subtitle,
+body.large-text ion-label,
+body.large-text p,
+body.large-text ion-text {
+  font-size: 18px;
+}
+
+body.large-text ion-button {
+  height: 56px;
+  font-size: 18px;
+}
+
+body.large-text ion-segment-button ion-label {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+body.high-contrast {
+  --ion-background-color: #000 !important;
+  --ion-text-color: #fff !important;
+}
+
+body.high-contrast ion-card {
+  border: 1px solid #fff;
+}
+
+body.high-contrast ion-item {
+  --background: #000;
+}
+

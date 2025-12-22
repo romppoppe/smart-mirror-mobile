@@ -1,0 +1,138 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Dashboard</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+
+  <!-- Accesibilidad -->
+  <ion-item lines="none">
+    <ion-label style="font-size: 18px;">Texto grande</ion-label>
+    <ion-toggle
+      slot="end"
+      [checked]="largeText"
+      (ionChange)="toggleLargeText($event)">
+    </ion-toggle>
+  </ion-item>
+
+  <!-- Acciones PDF -->
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Reportes</ion-card-title>
+      <ion-card-subtitle>Exporta o comparte el reporte médico</ion-card-subtitle>
+    </ion-card-header>
+
+    <ion-card-content>
+      <ion-button expand="block" (click)="exportPDF()">
+        Exportar reporte médico (PDF)
+      </ion-button>
+
+      <ion-button expand="block" color="primary" (click)="exportPDFBackend()">
+        Generar PDF (Backend) y Compartir
+      </ion-button>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Estado actual -->
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>
+        Estado actual
+        <ion-chip [color]="statusColor()" class="ion-margin-start">
+          <ion-label>{{ statusText }}</ion-label>
+        </ion-chip>
+      </ion-card-title>
+      <ion-card-subtitle>{{ statusReason }}</ion-card-subtitle>
+    </ion-card-header>
+
+    <!-- Skeleton mientras carga -->
+    <ion-card-content *ngIf="loading">
+      <ion-skeleton-text animated style="height: 20px; width: 60%;"></ion-skeleton-text>
+      <ion-skeleton-text animated style="height: 20px; width: 80%;"></ion-skeleton-text>
+      <ion-skeleton-text animated style="height: 20px; width: 70%;"></ion-skeleton-text>
+    </ion-card-content>
+
+    <!-- Datos -->
+    <ion-card-content *ngIf="!loading && reading">
+      <ion-grid>
+        <ion-row>
+          <ion-col size="4" class="ion-text-center">
+            <h2>HR</h2>
+            <p>{{ reading.hr ?? '—' }}<span *ngIf="reading.hr != null">bpm</span></p>
+          </ion-col>
+
+          <ion-col size="4" class="ion-text-center">
+            <h2>SpO₂</h2>
+            <p>{{ (reading.spo2 ?? '—') }}<span *ngIf="reading.spo2 != null">%</span></p>
+          </ion-col>
+
+          <ion-col size="4" class="ion-text-center">
+            <h2>HRV</h2>
+            <p>{{ (reading.hrv ?? '—') }}<span *ngIf="reading.hrv != null">ms</span></p>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+    </ion-card-content>
+
+    <!-- Sin datos -->
+    <ion-card-content *ngIf="!loading && !reading" class="ion-text-center">
+      <p>Aún no hay lecturas disponibles.</p>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Alertas -->
+  <ion-card>
+    <ion-card-content class="ion-text-center">
+      <h2 *ngIf="unreadAlerts > 0">⚠ {{ unreadAlerts }} alerta(s) sin ver</h2>
+      <h2 *ngIf="unreadAlerts === 0">Sin alertas activas</h2>
+
+      <ion-button expand="block" (click)="goAlerts()">Ver alertas</ion-button>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Gráfico combinado -->
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Historial de salud</ion-card-title>
+      <ion-card-subtitle>Seleccione un rango</ion-card-subtitle>
+    </ion-card-header>
+
+    <ion-card-content>
+      <ion-segment [value]="range" (ionChange)="onRangeChange($event.detail.value)">
+        <ion-segment-button value="30">
+          <ion-label>30</ion-label>
+        </ion-segment-button>
+
+        <ion-segment-button value="100">
+          <ion-label>100</ion-label>
+        </ion-segment-button>
+
+        <ion-segment-button value="24h">
+          <ion-label>24h</ion-label>
+        </ion-segment-button>
+
+        <ion-segment-button value="7d">
+          <ion-label>7d</ion-label>
+        </ion-segment-button>
+      </ion-segment>
+
+      <ion-skeleton-text
+        *ngIf="loadingCombined"
+        animated
+        style="height: 260px; margin-top: 12px;">
+      </ion-skeleton-text>
+
+      <div class="chart-box-lg" *ngIf="!loadingCombined">
+        <canvas
+          baseChart
+          [type]="'line'"
+          [data]="combinedChartData"
+          [plugins]="combinedPlugins"
+          [options]="combinedOptions">
+        </canvas>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+</ion-content>

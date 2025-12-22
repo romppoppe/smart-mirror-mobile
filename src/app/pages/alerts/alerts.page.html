@@ -1,0 +1,72 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Alertas</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+
+  <ion-segment [(ngModel)]="filter">
+    <ion-segment-button value="pending">
+      <ion-label>Pendientes</ion-label>
+    </ion-segment-button>
+    <ion-segment-button value="all">
+      <ion-label>Todas</ion-label>
+    </ion-segment-button>
+  </ion-segment>
+
+  <div *ngIf="loading" class="ion-padding ion-text-center">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Cargando alertas...</p>
+  </div>
+
+  <div *ngIf="!loading && shownAlerts.length === 0" class="ion-padding ion-text-center">
+    <ion-icon name="checkmark-circle-outline" style="font-size: 42px;"></ion-icon>
+    <h2>No hay alertas {{ filter === 'pending' ? 'pendientes' : '' }}</h2>
+  </div>
+
+  <ion-card *ngFor="let a of shownAlerts">
+    <ion-card-header>
+      <ion-badge [color]="statusColor(a.status)" style="font-size: 14px;">
+        {{ statusLabel(a.status) }}
+      </ion-badge>
+      <div style="margin-top: 8px; font-size: 15px; opacity: 0.85;">
+        {{ formatTs(a.createdAt) }}
+      </div>
+    </ion-card-header>
+
+    <ion-card-content>
+      <div *ngIf="a.reasons?.length">
+        <ion-chip *ngFor="let r of a.reasons" color="medium">
+          <ion-label>{{ r }}</ion-label>
+        </ion-chip>
+      </div>
+
+      <div style="margin-top: 10px; display:flex; gap: 10px; flex-wrap: wrap;">
+        <ion-chip *ngIf="a.vitals?.hr != null">
+          <ion-label>HR: {{ a.vitals?.hr }} bpm</ion-label>
+        </ion-chip>
+        <ion-chip *ngIf="a.vitals?.spo2 != null">
+          <ion-label>SpO₂: {{ a.vitals?.spo2 }}%</ion-label>
+        </ion-chip>
+        <ion-chip *ngIf="a.vitals?.temp != null">
+          <ion-label>Temp: {{ a.vitals?.temp }}°C</ion-label>
+        </ion-chip>
+      </div>
+
+      <ion-button
+        *ngIf="a.handled !== true"
+        expand="block"
+        color="success"
+        (click)="markAsHandled(a)"
+        style="margin-top: 12px;">
+        Marcar como atendida
+      </ion-button>
+
+      <ion-note *ngIf="a.handled === true" color="medium">
+        Atendida ✅
+      </ion-note>
+    </ion-card-content>
+  </ion-card>
+
+</ion-content>

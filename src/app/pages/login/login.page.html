@@ -1,0 +1,72 @@
+<ion-content class="ion-padding">
+  <div class="login-container">
+
+    <h1>Espejo Inteligente</h1>
+    <p class="subtitle">Monitoreo de salud</p>
+
+    <!-- Selector Login/Registro -->
+    <ion-segment [value]="mode" (ionChange)="setMode($event.detail.value)">
+      <ion-segment-button value="login">
+        <ion-label>Ingresar</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="register">
+        <ion-label>Registrarse</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+
+    <div class="form">
+
+      <!-- Nombre solo en registro -->
+      <ion-item *ngIf="mode === 'register'">
+        <ion-input
+          label="Nombre"
+          labelPlacement="stacked"
+          [(ngModel)]="displayName"
+          autocomplete="name">
+        </ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-input
+          label="Correo electrónico"
+          labelPlacement="stacked"
+          type="email"
+          [(ngModel)]="email"
+          autocomplete="email">
+        </ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-input
+          label="Contraseña"
+          labelPlacement="stacked"
+          type="password"
+          [(ngModel)]="password"
+          autocomplete="current-password">
+        </ion-input>
+      </ion-item>
+
+      <ion-text color="danger" *ngIf="error">
+        <p class="error">{{ error }}</p>
+      </ion-text>
+
+      <ion-button
+        expand="block"
+        size="large"
+        (click)="submit()"
+        [disabled]="loading">
+
+        <ion-spinner *ngIf="loading" name="crescent"></ion-spinner>
+        <span *ngIf="!loading">
+          {{ mode === 'login' ? 'Ingresar' : 'Crear cuenta' }}
+        </span>
+
+      </ion-button>
+
+      <p class="hint" *ngIf="mode === 'register'">
+        La contraseña debe tener mínimo 6 caracteres.
+      </p>
+    </div>
+
+  </div>
+</ion-content>
