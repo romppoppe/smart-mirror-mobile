@@ -12,114 +12,102 @@ import {
   orderBy,
   query,
   updateDoc,
+  addDoc,
   serverTimestamp,
   QuerySnapshot,
   DocumentData,
   where,
 } from 'firebase/firestore';
 
-console.log('[FIRESTORE] projectId:', (db as any)?._databaseId?.projectId);
-
 export type VitalStatus = 'normal' | 'warning' | 'risk';
 
 export type VitalReading = {
   id: string;
+
   hr?: number;
   spo2?: number;
   hrv?: number;
-
-  // legacy (no viene del anillo por ahora)
   temp?: number;
 
   status?: VitalStatus;
   reasons?: string[];
 
-  // ring-bridge usa ambos en tus docs:
-  ts?: any;        // Timestamp Firestore (si existe)
-  deviceTs?: number; // epoch seconds (confiable)
+  ts?: any;          // a veces viene como Timestamp o ms
+  deviceTs?: number; // ✅ ESTE ES EL CAMPO REAL EN TU BD (epoch seconds)
 
   evaluatedAt?: any;
   source?: string;
 
-  // opcional: samples (si luego quieres graficar micro-series)
-  samples?: {
-    hr?: number[];
-    spo2?: number[];
-    hrv?: number[];
-  };
-
   present?: boolean;
   day?: string;
+
+  // opcionales que ya tienes en tu BD
+  samples?: any;
+  meta?: any;
+  quality?: any;
+  norm?: any;
 };
 
 export type AlertEvent = {
   id: string;
+
+  type?: string;
   status?: VitalStatus;
+  message?: string;
+
   reasons?: string[];
   createdAt?: any;
+  ts?: any;
 
   handled?: boolean;
   handledAt?: any;
 
-  readingId?: string;
+  vitalsRefPath?: string;
   readingRef?: string;
+  vitals?: any;
 
-  vitals?: {
-    hr?: number;
-    spo2?: number;
-    hrv?: number;
-    temp?: number;
-    ts?: any;
-    source?: string;
-  };
+  // legacy backend
+  level?: string;
 };
 
-// ✅ MODO DISPOSITIVO ÚNICO (UID fijo del dueño del espejo)
-const FIXED_RING_UID = 'bBwtTlXgcmaLkjkCZjwvBg4Ju2J2';
-const RING_VITALS_PATH = ['readings', FIXED_RING_UID, 'vitals'] as const;
-
-// Para ordenar/filtrar (mucho más estable que ts)
 const ORDER_FIELD: 'deviceTs' = 'deviceTs';
 
 @Injectable({ providedIn: 'root' })
 export class HealthService {
-  /**
-   * ✅ Última lectura REAL (anillo): readings/{FIXED_RING_UID}/vitals ordenado por deviceTs desc
-   */
+  private vitalsCol(uid: string) {
+    return collection(db, 'readings', uid, 'vitals');
+  }
+
+  private alertsCol(uid: string) {
+    return collection(db, 'alerts', uid, 'events');
+  }
+
+  /** ✅ Última lectura REAL: orderBy(deviceTs desc) */
   latestReading$(): Observable<VitalReading | null> {
     return new Observable<VitalReading | null>((sub) => {
       let unsubSnap: (() => void) | null = null;
 
       const stopAuth = onAuthStateChanged(auth, (user) => {
-        console.log('[latestReading$] user:', user?.uid);
-
-        if (unsubSnap) {
-          unsubSnap();
-          unsubSnap = null;
-        }
+        if (unsubSnap) { unsubSnap(); unsubSnap = null; }
 
         if (!user) {
           sub.next(null);
           return;
         }
 
-        const colRef = collection(db, ...RING_VITALS_PATH);
+        const colRef = this.vitalsCol(user.uid);
         const q = query(colRef, orderBy(ORDER_FIELD, 'desc'), limit(1));
 
         unsubSnap = onSnapshot(
           q,
           (snap: QuerySnapshot<DocumentData>) => {
-            console.log('[RING latest] snap.size:', snap.size);
-
             if (snap.empty) {
               sub.next(null);
               return;
             }
 
             const d = snap.docs[0];
-            const data = d.data() as any;
-
-            sub.next({ id: d.id, ...(data as any) } as VitalReading);
+            sub.next({ id: d.id, ...(d.data() as any) } as VitalReading);
           },
           (err: Error) => {
             console.error('[latestReading$] ERROR:', err);
@@ -135,44 +123,29 @@ export class HealthService {
     });
   }
 
-  /**
-   * ✅ Historial REAL: últimas N lecturas (por cantidad)
-   */
+  /** ✅ Historial por cantidad */
   lastReadings$(take = 50): Observable<VitalReading[]> {
     return new Observable<VitalReading[]>((sub) => {
       let unsubSnap: (() => void) | null = null;
 
       const stopAuth = onAuthStateChanged(auth, (user) => {
-        console.log('[lastReadings$] user:', user?.uid);
-
-        if (unsubSnap) {
-          unsubSnap();
-          unsubSnap = null;
-        }
+        if (unsubSnap) { unsubSnap(); unsubSnap = null; }
 
         if (!user) {
           sub.next([]);
           return;
         }
 
-        const colRef = collection(db, ...RING_VITALS_PATH);
-
-        // ✅ orden robusto (deviceTs)
+        const colRef = this.vitalsCol(user.uid);
         const q = query(colRef, orderBy(ORDER_FIELD, 'desc'), limit(take));
 
         unsubSnap = onSnapshot(
           q,
           (snap) => {
-            console.log('[RING lastReadings] snap.size:', snap.size);
-            if (!snap.empty) {
-              console.log('[RING lastReadings] first doc:', snap.docs[0].id, snap.docs[0].data());
-            }
-
             const rows = snap.docs.map((d) => ({
               id: d.id,
               ...(d.data() as any),
             })) as VitalReading[];
-
             sub.next(rows);
           },
           (err) => {
@@ -189,24 +162,13 @@ export class HealthService {
     });
   }
 
-  /**
-   * ✅ Historial REAL por rango de tiempo (ej: 24h, 7d)
-   * hoursBack: horas hacia atrás desde "ahora".
-   *
-   * - Con ring-bridge es más estable filtrar por deviceTs (epoch seconds)
-   * - sinceSec = ahora - hoursBack
-   */
+  /** ✅ Historial por rango (horas atrás) usando deviceTs */
   lastReadingsByRange$(hoursBack: number): Observable<VitalReading[]> {
     return new Observable<VitalReading[]>((sub) => {
       let unsubSnap: (() => void) | null = null;
 
       const stopAuth = onAuthStateChanged(auth, (user) => {
-        console.log('[lastReadingsByRange$] user:', user?.uid, 'hoursBack:', hoursBack);
-
-        if (unsubSnap) {
-          unsubSnap();
-          unsubSnap = null;
-        }
+        if (unsubSnap) { unsubSnap(); unsubSnap = null; }
 
         if (!user) {
           sub.next([]);
@@ -216,8 +178,7 @@ export class HealthService {
         const nowSec = Math.floor(Date.now() / 1000);
         const sinceSec = nowSec - hoursBack * 60 * 60;
 
-        const colRef = collection(db, ...RING_VITALS_PATH);
-
+        const colRef = this.vitalsCol(user.uid);
         const q = query(
           colRef,
           where(ORDER_FIELD, '>=', sinceSec),
@@ -227,13 +188,10 @@ export class HealthService {
         unsubSnap = onSnapshot(
           q,
           (snap: QuerySnapshot<DocumentData>) => {
-            console.log('[RING range] snap.size:', snap.size);
-
             const rows = snap.docs.map((d) => ({
               id: d.id,
               ...(d.data() as any),
             })) as VitalReading[];
-
             sub.next(rows);
           },
           (err: Error) => {
@@ -250,39 +208,41 @@ export class HealthService {
     });
   }
 
-  /**
-   * ✅ Alertas: alerts/{uid}/events ordenado por createdAt desc
-   * (NO se toca; sigue igual)
-   */
+  /** ✅ Alertas (tu BD puede tener createdAt; si no, lo cambiamos luego) */
   latestAlerts$(take = 20): Observable<AlertEvent[]> {
     return new Observable<AlertEvent[]>((sub) => {
       let unsubSnap: (() => void) | null = null;
 
       const stopAuth = onAuthStateChanged(auth, (user) => {
-        console.log('[latestAlerts$] user:', user?.uid);
-
-        if (unsubSnap) {
-          unsubSnap();
-          unsubSnap = null;
-        }
+        if (unsubSnap) { unsubSnap(); unsubSnap = null; }
 
         if (!user) {
           sub.next([]);
           return;
         }
 
-        const colRef = collection(db, 'alerts', user.uid, 'events');
+        const colRef = this.alertsCol(user.uid);
+
+        // Si tus alerts sí tienen createdAt, esto está perfecto.
+        // Si no, me dices y lo cambiamos a ts.
         const q = query(colRef, orderBy('createdAt', 'desc'), limit(take));
 
         unsubSnap = onSnapshot(
           q,
           (snap: QuerySnapshot<DocumentData>) => {
-            console.log('[latestAlerts$] snap.size:', snap.size);
+            const rows: AlertEvent[] = snap.docs.map((d) => {
+              const data = d.data() as any;
+              const level = (data.level || data.type || data.status || 'normal') as VitalStatus;
+              const reasons: string[] = Array.isArray(data.reasons) ? data.reasons : [];
 
-            const rows: AlertEvent[] = snap.docs.map((d) => ({
-              id: d.id,
-              ...(d.data() as any),
-            }));
+              return {
+                id: d.id,
+                ...data,
+                type: data.type ?? level,
+                status: data.status ?? level,
+                message: data.message ?? (reasons.length ? reasons.join(' • ') : undefined),
+              };
+            });
 
             sub.next(rows);
           },
@@ -300,18 +260,27 @@ export class HealthService {
     });
   }
 
-  /**
-   * ✅ Marcar alerta como vista (handled)
-   */
   async markAlertHandled(alertId: string): Promise<void> {
     const uid = auth.currentUser?.uid;
     if (!uid) throw new Error('Usuario no autenticado');
 
     const ref = doc(db, 'alerts', uid, 'events', alertId);
-
     await updateDoc(ref, {
       handled: true,
       handledAt: serverTimestamp(),
+    });
+  }
+
+  async createAutomaticAlert(uid: string, message: string, type: 'risk' | 'warning', vitals: any) {
+    const colRef = this.alertsCol(uid);
+
+    await addDoc(colRef, {
+      type,
+      message,
+      vitals,
+      createdAt: serverTimestamp(),
+      handled: false,
+      reasons: [message],
     });
   }
 }

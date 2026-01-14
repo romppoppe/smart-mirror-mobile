@@ -16,13 +16,24 @@
 
     <div class="form">
 
+      <!-- ✅ Mensaje onboarding obligatorio (solo registro) -->
+      <div class="hint-box" *ngIf="mode === 'register'">
+        <ion-icon name="information-circle-outline"></ion-icon>
+        <div>
+          <strong>Después de crear tu cuenta</strong>
+          <p>te llevaremos a <b>Completar Perfil</b> (obligatorio) para usar el espejo.</p>
+        </div>
+      </div>
+
       <!-- Nombre solo en registro -->
       <ion-item *ngIf="mode === 'register'">
         <ion-input
           label="Nombre"
           labelPlacement="stacked"
           [(ngModel)]="displayName"
-          autocomplete="name">
+          autocomplete="name"
+          enterkeyhint="next"
+          inputmode="text">
         </ion-input>
       </ion-item>
 
@@ -32,19 +43,36 @@
           labelPlacement="stacked"
           type="email"
           [(ngModel)]="email"
-          autocomplete="email">
+          autocomplete="email"
+          inputmode="email"
+          enterkeyhint="next">
         </ion-input>
       </ion-item>
 
-      <ion-item>
+      <!-- ✅ Password con autocomplete correcto según modo -->
+      <ion-item *ngIf="mode === 'login'; else registerPass">
         <ion-input
           label="Contraseña"
           labelPlacement="stacked"
           type="password"
           [(ngModel)]="password"
-          autocomplete="current-password">
+          autocomplete="current-password"
+          enterkeyhint="go">
         </ion-input>
       </ion-item>
+
+      <ng-template #registerPass>
+        <ion-item>
+          <ion-input
+            label="Contraseña"
+            labelPlacement="stacked"
+            type="password"
+            [(ngModel)]="password"
+            autocomplete="new-password"
+            enterkeyhint="go">
+          </ion-input>
+        </ion-item>
+      </ng-template>
 
       <ion-text color="danger" *ngIf="error">
         <p class="error">{{ error }}</p>
@@ -57,15 +85,22 @@
         [disabled]="loading">
 
         <ion-spinner *ngIf="loading" name="crescent"></ion-spinner>
+
         <span *ngIf="!loading">
-          {{ mode === 'login' ? 'Ingresar' : 'Crear cuenta' }}
+          {{ mode === 'login' ? 'Ingresar' : 'Crear cuenta y continuar' }}
         </span>
 
       </ion-button>
 
+      <!-- Notas -->
       <p class="hint" *ngIf="mode === 'register'">
         La contraseña debe tener mínimo 6 caracteres.
       </p>
+
+      <p class="hint subtle" *ngIf="mode === 'register'">
+        Tus datos se usan para calibrar lecturas y alertas del espejo.
+      </p>
+
     </div>
 
   </div>

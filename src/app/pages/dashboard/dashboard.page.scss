@@ -1,12 +1,252 @@
-.chart-box-lg {
-  height: 260px;
+// 🌌 FONDO GLOBAL (Gradiente Profundo)
+ion-content.bg-gradient {
+  --background: linear-gradient(180deg, #0f172a 0%, #171717 100%);
 }
 
-ion-segment {
-  --height: 52px;
+// 👤 HEADER
+.header-section {
+  margin-bottom: 24px;
+  
+  .profile-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .greeting {
+    font-size: 28px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+    letter-spacing: -0.5px;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 4px 0 0 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    ion-icon { font-size: 16px; color: #38bdf8; } // Azul Cyan
+  }
 }
 
-ion-segment-button ion-label {
-  font-size: 16px;
-  font-weight: 600;
+// 🚀 BOTÓN MÁGICO (Usar Espejo)
+.magic-button {
+  width: 100%;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); // Indigo -> Violeta
+  border: none;
+  border-radius: 20px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+  transition: transform 0.2s active;
+  margin-bottom: 30px;
+
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+
+  .icon-box {
+    width: 44px;
+    height: 44px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+  }
+
+  .text-box {
+    flex: 1;
+    text-align: left;
+    padding-left: 16px;
+    
+    h3 {
+      margin: 0;
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    p {
+      margin: 2px 0 0 0;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 13px;
+    }
+  }
+
+  .arrow {
+    color: white;
+    font-size: 20px;
+    opacity: 0.8;
+  }
+}
+
+// 🧊 TARJETAS DE VIDRIO (Glassmorphism Core)
+.glass-card {
+  background: rgba(255, 255, 255, 0.03); // Transparencia muy baja
+  backdrop-filter: blur(20px);           // El efecto borroso
+  -webkit-backdrop-filter: blur(20px);   // Safari support
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 24px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+
+  // Brillo superior
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.9);
+    }
+  }
+}
+
+// 📊 ESTADO ACTUAL
+.status-card {
+  .status-badge {
+    padding: 6px 12px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    
+    &.normal { background: rgba(34, 197, 94, 0.2); color: #4ade80; } // Verde neón
+    &.warning { background: rgba(234, 179, 8, 0.2); color: #facc15; } // Amarillo neón
+    &.risk { background: rgba(239, 68, 68, 0.2); color: #f87171; }    // Rojo neón
+  }
+
+  .status-reason {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+
+  .stats-grid {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+
+    .stat-item {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 16px;
+      padding: 16px 8px;
+      text-align: center;
+      
+      .label {
+        display: block;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.5);
+        margin-bottom: 4px;
+        text-transform: uppercase;
+      }
+      .value {
+        font-size: 24px;
+        font-weight: 700;
+        color: white;
+      }
+      .unit {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.4);
+        margin-left: 2px;
+      }
+    }
+  }
+}
+
+// 📈 GRÁFICA
+.chart-card {
+  .pill-selector {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 100px;
+    padding: 4px;
+    display: flex;
+    gap: 4px;
+
+    span {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.5);
+      padding: 6px 12px;
+      border-radius: 20px;
+      transition: all 0.2s;
+      cursor: pointer;
+
+      &.active {
+        background: rgba(255, 255, 255, 0.15);
+        color: white;
+        font-weight: 600;
+      }
+    }
+  }
+
+  .chart-container {
+    height: 220px;
+    width: 100%;
+    margin-top: 10px;
+  }
+}
+
+// 🔘 ACCIONES SECUNDARIAS (Botones pequeños)
+.actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+
+  .glass-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.2s;
+
+    &:active {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    ion-icon {
+      font-size: 24px;
+      color: #cbd5e1;
+    }
+
+    span {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.8);
+      font-weight: 500;
+    }
+  }
+}
+
+// ☠️ ESTILOS DE EMERGENCIA
+.no-data {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 14px;
+  padding: 20px 0;
 }

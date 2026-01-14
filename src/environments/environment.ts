@@ -1,6 +1,6 @@
 export const environment = {
   production: false,
-  firebaseConfig: {
+  firebase: { // 👈 AQUÍ estaba el error, lo cambiamos a 'firebase'
     apiKey: "AIzaSyA_XJi9gAc3ktMG6UVoS5A-pk24hswdASs",
     authDomain: "smart-mirror-tesis.firebaseapp.com",
     projectId: "smart-mirror-tesis",

@@ -1,29 +1,212 @@
-ion-card {
-  margin-bottom: 16px;
+// 🌌 FONDO GLOBAL (Igual al Dashboard)
+ion-content.bg-gradient {
+  --background: linear-gradient(180deg, #0f172a 0%, #171717 100%);
 }
 
-.name {
-  font-size: 18px;
+// 🧊 TARJETAS DE VIDRIO (Glassmorphism Core - Copiado del Dashboard)
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 24px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+
+  // Brillo superior sutil
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  }
+}
+
+// 🏷️ TÍTULOS DE SECCIÓN
+.section-title {
+  color: #94a3b8; // Gris azulado
+  font-size: 12px;
   font-weight: 700;
-  margin: 0 0 4px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 10px 0 12px 12px;
 }
 
-.email {
+// 👤 SECCIÓN DE USUARIO
+.user-info {
+  text-align: center;
+  margin-bottom: 20px;
+
+  .user-name {
+    font-size: 22px;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
+  .user-email {
+    font-size: 14px;
+    color: #94a3b8; // Slate 400
+    margin: 4px 0 0 0;
+  }
+}
+
+// 📝 INPUTS DE VIDRIO (Para ID de espejo y Perfil)
+.input-group {
+  margin-bottom: 16px;
+
+  label {
+    display: block;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 6px;
+    margin-left: 4px;
+  }
+
+  .glass-input-wrapper {
+    background: rgba(0, 0, 0, 0.2); // Fondo más oscuro para input
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: border-color 0.2s;
+
+    &:focus-within {
+      border-color: #6366f1; // Borde Indigo al escribir
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    ion-icon {
+      font-size: 20px;
+      color: #64748b;
+    }
+
+    input, select {
+      background: transparent;
+      border: none;
+      outline: none;
+      width: 100%;
+      color: white;
+      font-size: 16px;
+      font-weight: 500;
+
+      &::placeholder {
+        color: rgba(255, 255, 255, 0.3);
+      }
+    }
+  }
+}
+
+// 🟣 BOTÓN MÁGICO (Igual al Dashboard)
+.magic-button {
+  width: 100%;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border: none;
+  border-radius: 16px;
+  color: white;
+  font-weight: 600;
   font-size: 15px;
-  opacity: 0.75;
-  margin: 0 0 12px 0;
-}
-
-.hint {
+  padding: 16px;
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
   margin-top: 10px;
-  font-size: 13px;
-  opacity: 0.65;
+
+  &:active { transform: scale(0.98); opacity: 0.9; }
+
+  &.small {
+    padding: 12px;
+    font-size: 14px;
+  }
 }
 
-ion-item {
-  --min-height: 64px;
+// 🔘 BOTÓN OUTLINE (Para editar perfil)
+.glass-btn-outline {
+  --background: rgba(255, 255, 255, 0.03);
+  --background-activated: rgba(255, 255, 255, 0.08);
+  --border-color: rgba(255, 255, 255, 0.2);
+  --border-width: 1px;
+  --border-radius: 16px;
+  --color: white;
+  margin-top: 10px;
+  height: 50px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
 }
 
-ion-toggle {
-  transform: scale(1.1);
+// 🔴 BOTÓN LOGOUT
+.logout-btn {
+  margin-top: 20px;
+  --border-color: rgba(239, 68, 68, 0.3); // Red 500
+  --color: #fca5a5; // Red 300
+}
+
+// 🎚️ TOGGLES (Accesibilidad)
+.toggle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+
+  .toggle-label {
+    span { display: block; color: white; font-size: 16px; font-weight: 500; }
+    p { margin: 4px 0 0 0; color: #64748b; font-size: 13px; }
+  }
+
+  ion-toggle {
+    --track-background: rgba(255, 255, 255, 0.1);
+    --track-background-checked: #4f46e5; // Indigo
+    --handle-background: white;
+  }
+}
+
+.divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.05);
+  margin: 8px 0;
+}
+
+// ℹ️ INFO ROW
+.info-row {
+  display: flex; justify-content: space-between; padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  
+  &:last-child { border-bottom: none; }
+  span { color: #94a3b8; font-size: 14px; }
+  .info-val { color: white; font-weight: 500; }
+}
+
+// 👇 ESTILOS ESPECÍFICOS DEL MODAL (Perfil)
+ion-modal.glass-modal {
+  --background: #0f172a; // Coincide con el fondo
+  
+  .modal-header-text {
+    text-align: center; margin-bottom: 25px;
+    h1 { font-size: 24px; color: white; font-weight: 700; margin-bottom: 8px; }
+    p { font-size: 14px; color: #94a3b8; margin: 0; max-width: 80%; margin: 0 auto; }
+  }
+
+  .row-inputs {
+    display: flex; gap: 12px;
+    .half { flex: 1; }
+  }
+  
+  // Arreglo para opciones del Select en fondo oscuro
+  select option {
+    background-color: #1e293b;
+    color: white;
+  }
+}
+
+.card-subtitle {
+  color: white; font-size: 16px; font-weight: 600; margin: 0 0 6px 0;
+}
+.card-desc {
+  color: #94a3b8; font-size: 13px; margin: 0 0 20px 0; line-height: 1.4;
+}
+
+.hint-text {
+  text-align: center; color: rgba(255,255,255,0.2); font-size: 12px; margin-top: 20px;
 }

@@ -1,78 +1,106 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-title>Ajustes</ion-title>
+<ion-header class="ion-no-border">
+  <ion-toolbar class="transparent-toolbar">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/app/dashboard" color="light"></ion-back-button>
+    </ion-buttons>
+    <ion-title style="color: white;">Ajustes</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding">
+<ion-content [fullscreen]="true" class="bg-gradient">
+  <div class="ion-padding">
 
-  <!-- Cuenta -->
-  <ion-card>
-    <ion-card-header>
-      <ion-card-title>Cuenta</ion-card-title>
-    </ion-card-header>
+    <h3 class="section-title">Cuenta</h3>
+    <div class="glass-card">
+      <div class="user-info">
+        <!-- ✅ Nombre: Firestore (profileData) primero, Auth fallback -->
+        <h2 class="user-name">
+          {{
+            (profileData.displayName && profileData.displayName.trim().length)
+              ? profileData.displayName
+              : (auth.currentUser?.displayName || 'Usuario')
+          }}
+        </h2>
 
-    <ion-card-content>
-      <p class="name">{{ displayName }}</p>
-      <p class="email">{{ email }}</p>
+        <!-- ✅ Email: Firestore primero (profileEmail), Auth fallback -->
+        <p class="user-email">
+          {{
+            (profileEmail && profileEmail.trim().length)
+              ? profileEmail
+              : (auth.currentUser?.email || '')
+          }}
+        </p>
+      </div>
 
-      <ion-button expand="block" color="medium" (click)="logout()">
-        Cerrar sesión
+      <!-- ✅ AHORA: en lugar de abrir modal, debe navegar a pantalla completa -->
+      <ion-button expand="block" class="glass-btn-outline" (click)="goProfileSetup()">
+        <ion-icon name="medical-outline" slot="start"></ion-icon>
+        EDITAR DATOS DE SALUD
       </ion-button>
 
-      <p class="hint">
-        Recomendado: mantén tu sesión iniciada en este dispositivo.
+      <ion-button expand="block" color="danger" fill="outline" class="logout-btn" (click)="logout()">
+        CERRAR SESIÓN
+      </ion-button>
+
+      <p class="hint-text">Recomendado: mantén tu sesión iniciada para recibir alertas.</p>
+    </div>
+
+    <h3 class="section-title">Conectividad</h3>
+    <div class="glass-card">
+      <h4 class="card-subtitle">Vinculación de dispositivos</h4>
+      <p class="card-desc">Ingresa el ID de tu anillo inteligente o espejo:</p>
+
+      <div class="input-group">
+        <div class="glass-input-wrapper">
+          <ion-icon name="bluetooth-outline"></ion-icon>
+          <input type="text" [(ngModel)]="linkedDeviceId" placeholder="Ej: MIRROR-01">
+        </div>
+      </div>
+
+      <button class="magic-button small" (click)="linkMirror()">
+        VINCULAR DISPOSITIVO
+      </button>
+
+      <p class="hint-text" style="margin-top: 10px; opacity: 0.8;">
+        Dispositivo actual:
+        <strong>{{ linkedDeviceId ? linkedDeviceId : 'Sin vincular' }}</strong>
       </p>
-    </ion-card-content>
-  </ion-card>
+    </div>
 
-  <!-- Accesibilidad -->
-  <ion-card>
-    <ion-card-header>
-      <ion-card-title>Accesibilidad</ion-card-title>
-      <ion-card-subtitle>Diseño pensado para adultos mayores</ion-card-subtitle>
-    </ion-card-header>
+    <h3 class="section-title">Accesibilidad</h3>
+    <div class="glass-card">
+      <h4 class="card-subtitle">Diseño pensado para todos</h4>
 
-    <ion-card-content>
+      <div class="toggle-row">
+        <div class="toggle-label">
+          <span>Texto grande</span>
+          <p>Aumenta el tamaño de texto</p>
+        </div>
+        <ion-toggle [checked]="largeText" (ionChange)="toggleLargeText($event)"></ion-toggle>
+      </div>
 
-      <ion-item lines="full">
-        <ion-label>
-          <h2>Texto grande</h2>
-          <p>Aumenta el tamaño de texto en toda la app</p>
-        </ion-label>
+      <div class="divider"></div>
 
-        <ion-toggle
-          slot="end"
-          [checked]="largeText"
-          (ionChange)="toggleLargeText($event)">
-        </ion-toggle>
-      </ion-item>
+      <div class="toggle-row">
+        <div class="toggle-label">
+          <span>Alto contraste</span>
+          <p>Mejora la legibilidad</p>
+        </div>
+        <ion-toggle [checked]="highContrast" (ionChange)="toggleHighContrast($event)"></ion-toggle>
+      </div>
+    </div>
 
-      <ion-item lines="none">
-        <ion-label>
-          <h2>Alto contraste</h2>
-          <p>Mejora la legibilidad en baja visión</p>
-        </ion-label>
+    <h3 class="section-title">Información</h3>
+    <div class="glass-card">
+      <div class="info-row">
+        <span>Proyecto:</span>
+        <span class="info-val">Espejo Inteligente</span>
+      </div>
+      <div class="info-row">
+        <span>Versión:</span>
+        <span class="info-val">1.0 (Beta)</span>
+      </div>
+    </div>
 
-        <ion-toggle
-          slot="end"
-          [checked]="highContrast"
-          (ionChange)="toggleHighContrast($event)">
-        </ion-toggle>
-      </ion-item>
-
-    </ion-card-content>
-  </ion-card>
-
-  <!-- Información (opcional pero recomendado para tesis) -->
-  <ion-card>
-    <ion-card-header>
-      <ion-card-title>Información</ion-card-title>
-    </ion-card-header>
-    <ion-card-content>
-      <p>Proyecto: Espejo Inteligente con Monitoreo de Salud</p>
-      <p>Versión: 1.0</p>
-    </ion-card-content>
-  </ion-card>
-
+  </div>
 </ion-content>

@@ -1,9 +1,10 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule } from '@ionic/angular';
+import { IonicModule, ToastController } from '@ionic/angular';
 import { Router } from '@angular/router';
-import { Subscription, Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 
+import { Firestore, doc, setDoc } from '@angular/fire/firestore';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartOptions, Plugin } from 'chart.js';
 
@@ -17,6 +18,7 @@ import {
 import { AccessibilityService } from '../../services/accessibility.service';
 import { ReportService } from '../../services/report.service';
 import { AuthService } from '../../services/auth.service';
+import { FirestoreService } from '../../services/firestore.service';
 import { Capacitor } from '@capacitor/core';
 
 type RangeKey = '30' | '100' | '24h' | '7d';
@@ -31,14 +33,24 @@ type RangeKey = '30' | '100' | '24h' | '7d';
 export class DashboardPage implements OnInit, OnDestroy {
   private sub = new Subscription();
   private rangeSub?: Subscription;
+  private authSub?: Subscription;
+  private profileSub?: Subscription;
 
   @ViewChild(BaseChartDirective) combinedChart?: BaseChartDirective;
 
-  // ✅ Lecturas del rango (para PDF y rango backend)
+  // Usuario actual
+  currentUserUid: string | null = null;
+
+  // ✅ Perfil del usuario (FUENTE: Firestore en tiempo real)
+  userDisplayName = 'Usuario';
+  userEmail = '';
+
+  // Perfil / dispositivo vinculado
+  linkedDeviceId: string = '—';
+
+  // Datos
   private currentRangeReadings: VitalReading[] = [];
-
   largeText = false;
-
   loading = true;
   reading: VitalReading | null = null;
 
@@ -53,6 +65,7 @@ export class DashboardPage implements OnInit, OnDestroy {
   range: RangeKey = '30';
   loadingCombined = true;
 
+  // Configuración de Gráfica
   combinedChartData: ChartConfiguration<'line'>['data'] = {
     labels: [],
     datasets: [
@@ -68,27 +81,27 @@ export class DashboardPage implements OnInit, OnDestroy {
     hrv: { warningLow: 20, riskLow: 10 },
   };
 
+  // --- COLORES GRÁFICA ---
   private hrColor(v: number | null): string {
     if (v == null) return '#9ca3af';
     if (v >= this.THRESHOLDS.hr.riskHigh || v <= this.THRESHOLDS.hr.riskLow) return '#dc2626';
     if (v >= this.THRESHOLDS.hr.warningHigh || v <= this.THRESHOLDS.hr.warningLow) return '#f59e0b';
     return '#16a34a';
   }
-
   private spo2Color(v: number | null): string {
     if (v == null) return '#9ca3af';
     if (v <= this.THRESHOLDS.spo2.riskLow) return '#dc2626';
     if (v <= this.THRESHOLDS.spo2.warningLow) return '#f59e0b';
     return '#16a34a';
   }
-
   private hrvColor(v: number | null): string {
-  if (v == null) return '#9ca3af';
-  if (v <= this.THRESHOLDS.hrv.riskLow) return '#dc2626';
-  if (v <= this.THRESHOLDS.hrv.warningLow) return '#f59e0b';
-  return '#16a34a';
-}
+    if (v == null) return '#9ca3af';
+    if (v <= this.THRESHOLDS.hrv.riskLow) return '#dc2626';
+    if (v <= this.THRESHOLDS.hrv.warningLow) return '#f59e0b';
+    return '#16a34a';
+  }
 
+  // --- PLUGIN UMBRALES ---
   private thresholdPlugin: Plugin<'line'> = {
     id: 'thresholdLines',
     afterDraw: (chart) => {
@@ -107,7 +120,6 @@ export class DashboardPage implements OnInit, OnDestroy {
         ctx.setLineDash([6, 4]);
         ctx.lineWidth = 1;
         ctx.strokeStyle = '#6b7280';
-
         ctx.beginPath();
         ctx.moveTo(left, y);
         ctx.lineTo(right, y);
@@ -116,7 +128,6 @@ export class DashboardPage implements OnInit, OnDestroy {
         const text = `${label}: ${value}`;
         ctx.setLineDash([]);
         ctx.font = '12px sans-serif';
-
         const padding = 4;
         const textW = ctx.measureText(text).width;
         const boxX = right - textW - 10;
@@ -124,7 +135,6 @@ export class DashboardPage implements OnInit, OnDestroy {
 
         ctx.fillStyle = 'rgba(255,255,255,0.85)';
         ctx.fillRect(boxX - padding, boxY, textW + padding * 2, 16);
-
         ctx.fillStyle = '#111827';
         ctx.fillText(text, boxX, boxY + 12);
         ctx.restore();
@@ -134,12 +144,8 @@ export class DashboardPage implements OnInit, OnDestroy {
       drawHLine('yHR', this.THRESHOLDS.hr.riskHigh, 'HR risk');
       drawHLine('yHR', this.THRESHOLDS.hr.warningLow, 'HR warn');
       drawHLine('yHR', this.THRESHOLDS.hr.riskLow, 'HR risk');
-
       drawHLine('ySpO2', this.THRESHOLDS.spo2.warningLow, 'SpO₂ warn');
       drawHLine('ySpO2', this.THRESHOLDS.spo2.riskLow, 'SpO₂ risk');
-
-      drawHLine('yHRV', this.THRESHOLDS.hrv.warningLow, 'HRV warn');
-      drawHLine('yHRV', this.THRESHOLDS.hrv.riskLow, 'HRV risk');
     },
   };
 
@@ -157,16 +163,7 @@ export class DashboardPage implements OnInit, OnDestroy {
       x: { ticks: { font: { size: 14 }, autoSkip: true, maxRotation: 0 } },
       yHR: { type: 'linear', position: 'left', ticks: { font: { size: 14 } }, title: { display: true, text: 'HR (bpm)' } },
       ySpO2: { type: 'linear', position: 'right', ticks: { font: { size: 14 } }, title: { display: true, text: 'SpO₂ (%)' }, grid: { drawOnChartArea: false }, min: 80, max: 100 },
-      yHRV: {
-  type: 'linear',
-  position: 'right',
-  ticks: { font: { size: 14 } },
-  title: { display: true, text: 'HRV (ms)' },
-  grid: { drawOnChartArea: false },
-  min: 0,
-  max: 150,
-},
-
+      yHRV: { type: 'linear', position: 'right', ticks: { font: { size: 14 } }, title: { display: true, text: 'HRV (ms)' }, grid: { drawOnChartArea: false }, min: 0, max: 150 },
     },
   };
 
@@ -175,13 +172,132 @@ export class DashboardPage implements OnInit, OnDestroy {
     private router: Router,
     private accessibility: AccessibilityService,
     private report: ReportService,
-    private auth: AuthService
+    public auth: AuthService,
+    private db: Firestore,
+    private toastController: ToastController,
+    private firestore: FirestoreService
   ) {}
 
   ngOnInit() {
-    console.log('[WEB] location:', window.location.href);
     this.largeText = this.accessibility.isEnabled();
 
+    // ✅ detectar cambios de usuario confiable
+    this.authSub = this.auth.user$.subscribe(async (user) => {
+      const newUid = user?.uid ?? null;
+
+      if (newUid === this.currentUserUid) return;
+
+      console.log('[Dashboard] Auth user changed:', newUid);
+
+      this.currentUserUid = newUid;
+      await this.handleUserChange();
+    });
+  }
+
+  ngOnDestroy() {
+    this.cleanupSubscriptions();
+    this.authSub?.unsubscribe();
+  }
+
+  /** Limpia TODA suscripción activa (incluye perfil) */
+  private cleanupSubscriptions() {
+    this.sub.unsubscribe();
+    this.sub = new Subscription();
+
+    this.rangeSub?.unsubscribe();
+    this.rangeSub = undefined;
+
+    this.profileSub?.unsubscribe();
+    this.profileSub = undefined;
+  }
+
+  /** Limpia UI y deja dashboard listo para el siguiente usuario */
+  private resetStateVisual() {
+    this.linkedDeviceId = '—';
+    this.reading = null;
+    this.alerts = [];
+    this.unreadAlerts = 0;
+    this.currentRangeReadings = [];
+
+    // ✅ perfil visible
+    this.userDisplayName = 'Usuario';
+    this.userEmail = '';
+
+    // ✅ reset chart
+    this.combinedChartData = {
+      ...this.combinedChartData,
+      labels: [],
+      datasets: [
+        { ...this.combinedChartData.datasets[0], data: [] },
+        { ...this.combinedChartData.datasets[1], data: [] },
+        { ...this.combinedChartData.datasets[2], data: [] },
+      ],
+    };
+
+    this.loading = true;
+    this.loadingAlerts = true;
+    this.loadingCombined = true;
+
+    this.status = 'normal';
+    this.statusText = 'CARGANDO';
+    this.statusReason = '';
+  }
+
+  /** Se ejecuta cuando cambia el usuario (login/logout/cambio real) */
+  private async handleUserChange() {
+    this.cleanupSubscriptions();
+    this.resetStateVisual();
+
+    // 1) si no hay usuario, enviar a login
+    if (!this.currentUserUid) {
+      console.warn('[Dashboard] No user session, redirecting...');
+      await this.router.navigateByUrl('/home', { replaceUrl: true });
+      return;
+    }
+
+    // 2) ✅ PERFIL EN TIEMPO REAL (aquí está la clave para que Dashboard cambie al editar Settings)
+    this.subscribeUserProfile(this.currentUserUid);
+
+    // 3) iniciar streams del usuario actual (lecturas/alertas/gráficas)
+    this.iniciarSuscripciones();
+  }
+
+  /** ✅ Mantiene nombre/email/linkedDeviceId SIEMPRE sincronizados con Firestore */
+  private subscribeUserProfile(uid: string) {
+    this.profileSub?.unsubscribe();
+
+    this.profileSub = this.firestore.userProfile$(uid).subscribe({
+      next: (profile) => {
+        // Nombre y correo (Firestore first, luego Auth fallback)
+        this.userDisplayName =
+          profile?.displayName?.trim() ||
+          this.auth.currentUser?.displayName ||
+          'Usuario';
+
+        this.userEmail =
+          profile?.email?.trim() ||
+          this.auth.currentUser?.email ||
+          '';
+
+        // Dispositivo vinculado
+        this.linkedDeviceId = profile?.linkedDeviceId?.trim() || 'Sin vincular';
+      },
+      error: (e) => {
+        console.warn('[Dashboard] userProfile$ error', e);
+        // Fallbacks
+        this.userDisplayName = this.auth.currentUser?.displayName || 'Usuario';
+        this.userEmail = this.auth.currentUser?.email || '';
+        this.linkedDeviceId = 'Sin vincular';
+      },
+    });
+
+    this.sub.add(this.profileSub);
+  }
+
+  private iniciarSuscripciones() {
+    this.loading = true;
+
+    // 1) Lectura actual
     this.sub.add(
       this.health.latestReading$().subscribe({
         next: (r) => {
@@ -196,6 +312,7 @@ export class DashboardPage implements OnInit, OnDestroy {
       })
     );
 
+    // 2) Alertas
     this.sub.add(
       this.health.latestAlerts$(20).subscribe({
         next: (rows) => {
@@ -210,61 +327,70 @@ export class DashboardPage implements OnInit, OnDestroy {
       })
     );
 
+    // 3) Gráficas
     this.subscribeCombinedRange();
-  }
-
-  ngOnDestroy() {
-    this.sub.unsubscribe();
-    this.rangeSub?.unsubscribe();
   }
 
   goAlerts() {
     this.router.navigateByUrl('/app/alerts');
   }
 
-  // ✅ Botón local: WEB genera jsPDF, MOBILE fuerza backend
-  async exportPDF() {
-    console.log('[dashboard] exportPDF click');
-    const platform = Capacitor.getPlatform();
-    console.log('[dashboard] exportPDF platform', platform);
-
+  async activarEspejo() {
     const user = this.auth.currentUser;
     if (!user) {
-      console.warn('[dashboard] exportPDF: no user');
+      this.mostrarToast('⚠️ No hay usuario logueado', 'danger');
       return;
     }
 
-    // ✅ MOBILE: no uses doc.save(), fuerza backend (estable para producto)
+    // ✅ nombre correcto (Firestore first, luego auth)
+    const nameToSend =
+      this.userDisplayName?.trim() ||
+      user.displayName ||
+      'Usuario';
+
+    try {
+      const sessionRef = doc(this.db, 'system', 'mirror_access');
+      await setDoc(sessionRef, {
+        active_uid: user.uid,
+        timestamp: new Date(),
+        user_name: nameToSend,
+      });
+
+      this.mostrarToast('🚀 ¡Espejo Activado! Ponte frente a él.', 'success');
+    } catch (error) {
+      console.error('Error en sync:', error);
+      this.mostrarToast('❌ Error de conexión', 'danger');
+    }
+  }
+
+  async exportPDF() {
+    const platform = Capacitor.getPlatform();
+    const user = this.auth.currentUser;
+    if (!user) return;
+
     if (platform !== 'web') {
-      console.log('[dashboard] exportPDF mobile => usando backend');
       await this.exportPDFBackend();
       return;
     }
 
     const chart = this.combinedChart?.chart;
     const canvas = chart?.canvas as HTMLCanvasElement | undefined;
+    if (!canvas || !chart) return;
 
-    if (!canvas || !chart) {
-      console.warn('[dashboard] exportPDF: no canvas/chart');
-      return;
-    }
-
-    // (opcional) suaviza puntos para PDF
     try {
       (chart.options as any).elements = { point: { radius: 2 } };
       chart.update();
     } catch {}
 
-    const reasons =
-      this.reading?.reasons?.length ? this.reading.reasons :
+    const reasons = this.reading?.reasons?.length ? this.reading.reasons :
       this.statusReason ? [this.statusReason] : [];
 
     try {
       await this.report.exportMedicalReportPDF({
         patient: {
           uid: user.uid,
-          displayName: user.displayName ?? undefined,
-          email: user.email ?? undefined,
+          displayName: this.userDisplayName ?? user.displayName ?? undefined,
+          email: this.userEmail ?? user.email ?? undefined
         },
         rangeLabel: this.rangeLabel(),
         generatedAt: new Date(),
@@ -275,39 +401,23 @@ export class DashboardPage implements OnInit, OnDestroy {
         alerts: this.alerts,
         chartCanvas: canvas,
       });
-      console.log('[dashboard] exportPDF web OK');
     } catch (e) {
-      console.error('[dashboard] exportPDF web ERROR', e);
+      console.error(e);
     }
   }
 
-  // ✅ Botón backend: APK final (base64 -> Filesystem -> Share)
   async exportPDFBackend() {
-    console.log('[dashboard] exportPDFBackend click');
-
     const user = this.auth.currentUser;
-    if (!user) {
-      console.warn('[dashboard] exportPDFBackend: no user');
-      return;
-    }
+    if (!user) return;
 
     try {
+      this.mostrarToast('📄 Generando reporte en la nube...', 'primary');
       const { from, to } = this.getBackendRangeMs();
-      console.log('[dashboard] backend range(ms)', { from, to });
-
-      // Debe devolver { reportId, fileName, base64 } (después de tu cambio en Cloud Function)
       const res: any = await this.report.generateMedicalReportFromBackend({ from, to });
-
-      console.log('[dashboard] backend OK', {
-        reportId: res?.reportId,
-        fileName: res?.fileName,
-        base64len: res?.base64?.length,
-      });
-
       await this.report.saveAndShareBase64Pdf(res.fileName, res.base64);
-      console.log('[dashboard] share OK');
     } catch (e) {
-      console.error('[dashboard] exportPDFBackend ERROR', e);
+      console.error(e);
+      this.mostrarToast('Error al generar PDF', 'danger');
     }
   }
 
@@ -342,7 +452,6 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.rangeSub = obs$.subscribe({
       next: (rows) => {
         this.currentRangeReadings = rows ?? [];
-
         const { labels, hr, spo2, hrv } = this.normalizeReadings(this.currentRangeReadings);
 
         this.combinedChartData = {
@@ -384,7 +493,12 @@ export class DashboardPage implements OnInit, OnDestroy {
   }
 
   private normalizeReadings(readings: VitalReading[]) {
-    const sorted = [...(readings ?? [])].sort((a, b) => this.toMillis(a.ts) - this.toMillis(b.ts));
+    // ✅ si existe deviceTs, úsalo (es tu campo real estable)
+    const sorted = [...(readings ?? [])].sort((a, b) => {
+      const ams = this.toMillis(a);
+      const bms = this.toMillis(b);
+      return ams - bms;
+    });
 
     const labels: string[] = [];
     const hr: (number | null)[] = [];
@@ -392,7 +506,7 @@ export class DashboardPage implements OnInit, OnDestroy {
     const hrv: (number | null)[] = [];
 
     for (const r of sorted) {
-      labels.push(this.formatTime(this.toMillis(r.ts)));
+      labels.push(this.formatTime(this.toMillis(r)));
       hr.push(typeof r.hr === 'number' ? r.hr : null);
       spo2.push(typeof r.spo2 === 'number' ? r.spo2 : null);
       hrv.push(typeof r.hrv === 'number' ? r.hrv : null);
@@ -401,7 +515,21 @@ export class DashboardPage implements OnInit, OnDestroy {
     return { labels, hr, spo2, hrv };
   }
 
-  private toMillis(ts: any): number {
+  private toMillis(rOrTs: any): number {
+    // ✅ Si recibimos un VitalReading, preferimos deviceTs
+    if (rOrTs && typeof rOrTs === 'object' && (rOrTs.deviceTs || rOrTs.ts)) {
+      const deviceTs = Number(rOrTs.deviceTs);
+      if (Number.isFinite(deviceTs) && deviceTs > 0) return deviceTs * 1000;
+
+      const ts = rOrTs.ts;
+      if (ts && typeof ts.toMillis === 'function') return ts.toMillis();
+      const d = new Date(ts);
+      const ms = d.getTime();
+      return isNaN(ms) ? Date.now() : ms;
+    }
+
+    // ✅ Si recibimos solo ts
+    const ts = rOrTs;
     if (!ts) return Date.now();
     if (typeof ts.toMillis === 'function') return ts.toMillis();
     const d = new Date(ts);
@@ -418,14 +546,10 @@ export class DashboardPage implements OnInit, OnDestroy {
     const hr = typeof r.hr === 'number' ? r.hr : null;
     const spo2 = typeof r.spo2 === 'number' ? r.spo2 : null;
 
-    // risk
     if (hr != null && (hr >= this.THRESHOLDS.hr.riskHigh || hr <= this.THRESHOLDS.hr.riskLow)) return 'risk';
     if (spo2 != null && spo2 <= this.THRESHOLDS.spo2.riskLow) return 'risk';
-
-    // warning
     if (hr != null && (hr >= this.THRESHOLDS.hr.warningHigh || hr <= this.THRESHOLDS.hr.warningLow)) return 'warning';
     if (spo2 != null && spo2 <= this.THRESHOLDS.spo2.warningLow) return 'warning';
-
     return 'normal';
   }
 
@@ -441,11 +565,7 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.status = s;
     this.statusText = s.toUpperCase();
 
-    if (r.reasons?.length) {
-      this.statusReason = r.reasons.join(' • ');
-      return;
-    }
-
+    if (r.reasons?.length) { this.statusReason = r.reasons.join(' • '); return; }
     if (s === 'risk') this.statusReason = 'Valores críticos detectados.';
     else if (s === 'warning') this.statusReason = 'Valores fuera de rango.';
     else this.statusReason = 'Lectura dentro de parámetros normales.';
@@ -465,24 +585,30 @@ export class DashboardPage implements OnInit, OnDestroy {
     return 'Últimos 7 días';
   }
 
-  // ✅ Calcula from/to para backend sin variables extra
   private getBackendRangeMs(): { from: number; to: number } {
     const to = Date.now();
-
     if (this.range === '24h') return { from: to - 24 * 60 * 60 * 1000, to };
     if (this.range === '7d') return { from: to - 7 * 24 * 60 * 60 * 1000, to };
 
-    // Para 30/100: usa lecturas ya cargadas (mejor precisión)
     const rows = this.currentRangeReadings ?? [];
     if (rows.length >= 2) {
-      const sorted = [...rows].sort((a, b) => this.toMillis(a.ts) - this.toMillis(b.ts));
+      const sorted = [...rows].sort((a, b) => this.toMillis(a) - this.toMillis(b));
       return {
-        from: this.toMillis(sorted[0].ts),
-        to: this.toMillis(sorted[sorted.length - 1].ts) + 1,
+        from: this.toMillis(sorted[0]),
+        to: this.toMillis(sorted[sorted.length - 1]) + 1,
       };
     }
-
-    // fallback
     return { from: to - 24 * 60 * 60 * 1000, to };
+  }
+
+  async mostrarToast(mensaje: string, color: string) {
+    const toast = await this.toastController.create({
+      message: mensaje,
+      duration: 3000,
+      position: 'bottom',
+      color: color,
+      icon: 'information-circle'
+    });
+    toast.present();
   }
 }
