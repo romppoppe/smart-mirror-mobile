@@ -1,3 +1,5 @@
+// src/app/services/accessibility.service.ts
+
 import { Injectable } from '@angular/core';
 
 const LARGE_TEXT_KEY = 'accessibility.largeText';
@@ -10,11 +12,11 @@ export class AccessibilityService {
 
   constructor() {
     // ✅ Texto grande
-    const savedLarge = localStorage.getItem(LARGE_TEXT_KEY);
+    const savedLarge = this.safeGetItem(LARGE_TEXT_KEY);
     this.enabled = savedLarge === 'true';
 
     // ✅ Alto contraste
-    const savedHC = localStorage.getItem(HIGH_CONTRAST_KEY);
+    const savedHC = this.safeGetItem(HIGH_CONTRAST_KEY);
     this.highContrast = savedHC === '1';
 
     // ✅ aplicar ambos al iniciar
@@ -29,12 +31,15 @@ export class AccessibilityService {
 
   toggle(value: boolean) {
     this.enabled = value;
-    localStorage.setItem(LARGE_TEXT_KEY, String(value));
+    this.safeSetItem(LARGE_TEXT_KEY, String(value));
     this.applyLargeText();
   }
 
   private applyLargeText() {
-    document.body.classList.toggle('large-text', this.enabled);
+    try {
+      document.documentElement.classList.toggle('large-text', this.enabled); // ✅ HTML
+      document.body.classList.toggle('large-text', this.enabled);            // ✅ BODY
+    } catch {}
   }
 
   // ===== ALTO CONTRASTE =====
@@ -44,11 +49,43 @@ export class AccessibilityService {
 
   setHighContrast(enabled: boolean) {
     this.highContrast = enabled;
-    localStorage.setItem(HIGH_CONTRAST_KEY, enabled ? '1' : '0');
+    this.safeSetItem(HIGH_CONTRAST_KEY, enabled ? '1' : '0');
     this.applyHighContrast();
   }
 
   private applyHighContrast() {
-    document.body.classList.toggle('high-contrast', this.highContrast);
+    this.toggleClassOnRootAndBody('high-contrast', this.highContrast);
+  }
+
+  // ===== HELPERS (safe + global) =====
+  private toggleClassOnRootAndBody(className: string, enabled: boolean) {
+    try {
+      // html
+      if (typeof document !== 'undefined' && document.documentElement) {
+        document.documentElement.classList.toggle(className, enabled);
+      }
+      // body
+      if (typeof document !== 'undefined' && document.body) {
+        document.body.classList.toggle(className, enabled);
+      }
+    } catch {
+      // no-op
+    }
+  }
+
+  private safeGetItem(key: string): string | null {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+
+  private safeSetItem(key: string, value: string) {
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      // no-op
+    }
   }
 }

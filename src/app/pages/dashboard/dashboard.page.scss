@@ -51,7 +51,7 @@ ion-content.bg-hud {
       border: 1px solid rgba(255,255,255,0.08); color: hsl(var(--fg-hsl));
       display: flex; align-items: center; justify-content: center; position: relative;
       .lucide-icon { width: 20px; height: 20px; }
-      
+
       .badge-dot {
         position: absolute; top: -2px; right: -2px; background: hsl(var(--health-risk));
         color: white; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px;
@@ -75,28 +75,28 @@ ion-content.bg-hud {
 .health-status {
   transition: all 0.4s ease;
 
-  &.normal { 
-    border-color: hsla(var(--health-normal), 0.3); 
-    background: linear-gradient(135deg, hsla(var(--health-normal), 0.08), hsla(220, 60%, 10%, 0.6)); 
+  &.normal {
+    border-color: hsla(var(--health-normal), 0.3);
+    background: linear-gradient(135deg, hsla(var(--health-normal), 0.08), hsla(220, 60%, 10%, 0.6));
   }
-  &.warning { 
-    border-color: hsla(var(--health-warning), 0.3); 
-    background: linear-gradient(135deg, hsla(var(--health-warning), 0.08), hsla(220, 60%, 10%, 0.6)); 
+  &.warning {
+    border-color: hsla(var(--health-warning), 0.3);
+    background: linear-gradient(135deg, hsla(var(--health-warning), 0.08), hsla(220, 60%, 10%, 0.6));
   }
-  &.risk { 
-    border-color: hsla(var(--health-risk), 0.3); 
-    background: linear-gradient(135deg, hsla(var(--health-risk), 0.08), hsla(220, 60%, 10%, 0.6)); 
+  &.risk {
+    border-color: hsla(var(--health-risk), 0.3);
+    background: linear-gradient(135deg, hsla(var(--health-risk), 0.08), hsla(220, 60%, 10%, 0.6));
   }
 
-  .card-content-wrapper { 
-    display: flex; gap: 20px; align-items: center; position: relative; z-index: 1; 
+  .card-content-wrapper {
+    display: flex; gap: 20px; align-items: center; position: relative; z-index: 1;
   }
-  
+
   .status-left {
     .status-icon-wrapper {
       position: relative; width: 56px; height: 56px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-      
+
       .lucide-icon { width: 28px; height: 28px; stroke-width: 3px; }
 
       .pulse-ring {
@@ -105,16 +105,16 @@ ion-content.bg-hud {
       }
     }
 
-    .normal & .status-icon-wrapper { 
-      background: hsla(var(--health-normal), 0.2); color: hsl(var(--health-normal)); 
+    .normal & .status-icon-wrapper {
+      background: hsla(var(--health-normal), 0.2); color: hsl(var(--health-normal));
       .pulse-ring { animation: pulse-ring-anim 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
     }
-    .warning & .status-icon-wrapper { 
-      background: hsla(var(--health-warning), 0.2); color: hsl(var(--health-warning)); 
+    .warning & .status-icon-wrapper {
+      background: hsla(var(--health-warning), 0.2); color: hsl(var(--health-warning));
       .pulse-ring { animation: pulse-ring-anim 2s infinite; }
     }
-    .risk & .status-icon-wrapper { 
-      background: hsla(var(--health-risk), 0.2); color: hsl(var(--health-risk)); 
+    .risk & .status-icon-wrapper {
+      background: hsla(var(--health-risk), 0.2); color: hsl(var(--health-risk));
       animation: pulse-glow 1s infinite;
     }
   }
@@ -125,14 +125,14 @@ ion-content.bg-hud {
       display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
       h2 { font-family: var(--font-hud); font-size: 19px; font-weight: 700; color: white; margin: 0; letter-spacing: 0.5px; }
       .status-pill {
-        font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 6px; 
+        font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 6px;
         font-family: var(--font-hud); letter-spacing: 0.5px; text-transform: uppercase;
       }
       .normal & .status-pill { background: hsla(var(--health-normal), 0.2); color: hsl(var(--health-normal)); }
       .warning & .status-pill { background: hsla(var(--health-warning), 0.2); color: hsl(var(--health-warning)); }
       .risk & .status-pill { background: hsla(var(--health-risk), 0.2); color: hsl(var(--health-risk)); }
     }
-    
+
     .reason-text { font-size: 13px; color: #94a3b8; margin: 0 0 14px 0; line-height: 1.4; font-weight: 500; }
 
     .mini-pills-row {
@@ -142,7 +142,7 @@ ion-content.bg-hud {
         display: flex; align-items: center; gap: 6px;
         background: rgba(15, 23, 42, 0.6); border: 1px solid transparent;
         .lucide-icon { width: 14px; height: 14px; }
-        
+
         &.hr { background: linear-gradient(90deg, hsla(350, 85%, 60%, 0.15), transparent); color: hsl(350, 85%, 60%); border-color: hsla(350, 85%, 60%, 0.2); }
         &.spo2 { background: linear-gradient(90deg, hsla(200, 100%, 55%, 0.15), transparent); color: hsl(200, 100%, 55%); border-color: hsla(200, 100%, 55%, 0.2); }
         &.hrv { background: linear-gradient(90deg, hsla(280, 80%, 60%, 0.15), transparent); color: hsl(280, 80%, 60%); border-color: hsla(280, 80%, 60%, 0.2); }
@@ -175,7 +175,7 @@ ion-content.bg-hud {
     color: hsl(var(--bg-hsl)); font-family: var(--font-hud); font-weight: 700; font-size: 15px;
     overflow: hidden; box-shadow: 0 0 20px hsla(var(--primary-hsl), 0.3);
     margin-bottom: 16px;
-    
+
     .btn-content { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .shimmer-effect {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -222,7 +222,7 @@ ion-content.bg-hud {
 .alert-banner {
   @extend .hud-card;
   padding: 16px; display: flex; align-items: center; gap: 16px; border-radius: 20px; margin-top: 4px;
-  
+
   .bell-box {
     width: 40px; height: 40px; background: hsla(35, 100%, 55%, 0.2); border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
@@ -242,7 +242,7 @@ ion-content.bg-hud {
     display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;
     h3 { font-family: var(--font-hud); font-size: 18px; font-weight: 700; color: white; margin: 0; }
     .subtitle-chart { font-size: 12px; color: #94a3b8; margin: 2px 0 0 0; }
-    
+
     .chart-pills {
       background: rgba(255,255,255,0.03); padding: 4px; border-radius: 12px; display: flex; gap: 4px;
       span {
@@ -251,7 +251,29 @@ ion-content.bg-hud {
       }
     }
   }
-  .chart-wrapper { height: 200px; width: 100%; }
+
+  // ✅ FIX CRÍTICO MÓVIL: asegurar size correcto del canvas
+  .chart-wrapper {
+    height: 200px;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+    // esto ayuda a evitar glitches de composición en webviews
+    transform: translateZ(0);
+  }
+
+  .chart-wrapper canvas,
+  .chart-wrapper ion-skeleton-text {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  // evita que el canvas “se coma” el scroll/touch
+  .chart-wrapper canvas {
+    touch-action: pan-y;
+  }
 }
 
 // LEYENDA Y NOTAS
@@ -279,21 +301,19 @@ ion-content.bg-hud {
 
   .actions-grid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
-    
+
     .action-btn {
       height: 52px; border-radius: 14px; font-size: 13px; font-weight: 700;
       display: flex; align-items: center; justify-content: center; gap: 10px;
       transition: all 0.2s;
-      
+
       .lucide-icon { width: 18px; height: 18px; }
 
-      // Outline (PDF)
       &.outline {
         background: transparent; border: 1px solid rgba(255,255,255,0.15); color: white;
         &:active { background: rgba(255,255,255,0.05); }
       }
 
-      // Filled (Compartir - Cian)
       &.filled {
         background: linear-gradient(90deg, #22d3ee, #3b82f6);
         border: none; color: #0f172a; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);

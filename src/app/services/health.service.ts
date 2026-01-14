@@ -33,8 +33,8 @@ export type VitalReading = {
   status?: VitalStatus;
   reasons?: string[];
 
-  ts?: any;          // Timestamp (ideal) o ms
-  deviceTs?: number; // epoch seconds (del dispositivo)
+  ts?: any;          // Timestamp (lo correcto) o a veces Date
+  deviceTs?: number; // epoch seconds (legacy/extra)
 
   evaluatedAt?: any;
   source?: string;
@@ -71,11 +71,11 @@ export type AlertEvent = {
   level?: string;
 };
 
-// ✅ EN MÓVIL: usar "ts" para ordenar (coincide con tu monitor y evita desfases de deviceTs)
-const ORDER_FIELD_TS: 'ts' = 'ts';
+// ✅ IMPORTANTE: usamos ts para ordenar y rango (Timestamp real en tu BD)
+const ORDER_FIELD: 'ts' = 'ts';
 
-// (lo dejamos declarado por si lo necesitas en el futuro sin romper nada)
-const ORDER_FIELD_DEVICE: 'deviceTs' = 'deviceTs';
+// (Opcional) para no romper móvil si un usuario tiene demasiadas lecturas en 24h/7d
+const RANGE_LIMIT = 1500;
 
 @Injectable({ providedIn: 'root' })
 export class HealthService {
@@ -87,10 +87,7 @@ export class HealthService {
     return collection(db, 'alerts', uid, 'events');
   }
 
-  /** ✅ Última lectura REAL: orderBy(ts desc)
-   *  - Evita el bug de deviceTs desfasado.
-   *  - Documentos sin ts quedan al final (no rompen).
-   */
+  /** ✅ Última lectura REAL: orderBy(ts desc) */
   latestReading$(): Observable<VitalReading | null> {
     return new Observable<VitalReading | null>((sub) => {
       let unsubSnap: (() => void) | null = null;
@@ -104,7 +101,7 @@ export class HealthService {
         }
 
         const colRef = this.vitalsCol(user.uid);
-        const q = query(colRef, orderBy(ORDER_FIELD_TS, 'desc'), limit(1));
+        const q = query(colRef, orderBy(ORDER_FIELD, 'desc'), limit(1));
 
         unsubSnap = onSnapshot(
           q,
@@ -131,7 +128,7 @@ export class HealthService {
     });
   }
 
-  /** ✅ Historial por cantidad (ordenado por ts desc) */
+  /** ✅ Historial por cantidad */
   lastReadings$(take = 50): Observable<VitalReading[]> {
     return new Observable<VitalReading[]>((sub) => {
       let unsubSnap: (() => void) | null = null;
@@ -145,7 +142,7 @@ export class HealthService {
         }
 
         const colRef = this.vitalsCol(user.uid);
-        const q = query(colRef, orderBy(ORDER_FIELD_TS, 'desc'), limit(take));
+        const q = query(colRef, orderBy(ORDER_FIELD, 'desc'), limit(take));
 
         unsubSnap = onSnapshot(
           q,
@@ -183,16 +180,16 @@ export class HealthService {
           return;
         }
 
+        // ✅ ts es Timestamp -> el filtro debe ser Timestamp (no number)
         const sinceMs = Date.now() - hoursBack * 60 * 60 * 1000;
-        const sinceTs = Timestamp.fromMillis(sinceMs);
+        const since = Timestamp.fromMillis(sinceMs);
 
         const colRef = this.vitalsCol(user.uid);
-
-        // ✅ where + orderBy en el MISMO campo (ts) => estable y sin líos de deviceTs
         const q = query(
           colRef,
-          where(ORDER_FIELD_TS, '>=', sinceTs),
-          orderBy(ORDER_FIELD_TS, 'desc')
+          where(ORDER_FIELD, '>=', since),
+          orderBy(ORDER_FIELD, 'desc'),
+          limit(RANGE_LIMIT)
         );
 
         unsubSnap = onSnapshot(
@@ -218,7 +215,7 @@ export class HealthService {
     });
   }
 
-  /** ✅ Alertas (tu BD puede tener createdAt; si no, lo cambiamos luego) */
+  /** ✅ Alertas */
   latestAlerts$(take = 20): Observable<AlertEvent[]> {
     return new Observable<AlertEvent[]>((sub) => {
       let unsubSnap: (() => void) | null = null;
@@ -233,8 +230,6 @@ export class HealthService {
 
         const colRef = this.alertsCol(user.uid);
 
-        // Si tus alerts sí tienen createdAt, esto está perfecto.
-        // Si no, me dices y lo cambiamos a ts.
         const q = query(colRef, orderBy('createdAt', 'desc'), limit(take));
 
         unsubSnap = onSnapshot(

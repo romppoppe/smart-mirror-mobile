@@ -219,3 +219,135 @@ ion-content.bg-gradient > .ion-padding {
   position: relative;
   z-index: 10;
 }
+// =====================================================
+// ✅ HIGH CONTRAST MODE (activado por class .high-contrast)
+// =====================================================
+
+// Nota: La clase se aplica en <html> y <body> desde settings.page.ts
+// Para Ionic, también apuntamos a ion-content y a tus clases locales.
+
+:global(html.high-contrast),
+:global(body.high-contrast) {
+
+  // Fondo general más contrastado
+  ion-content.bg-gradient {
+    --background: linear-gradient(180deg, #050a16 0%, #000000 100%);
+  }
+
+  // Tarjetas con borde más fuerte y menos transparencia
+  .glass-card {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 20px 60px rgba(0,0,0,0.65);
+
+    &::before {
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
+    }
+  }
+
+  // Títulos y textos: más blancos, menos "slate"
+  .section-title {
+    color: rgba(255,255,255,0.8);
+  }
+
+  .user-info {
+    .user-name {
+      color: #ffffff;
+      text-shadow: 0 2px 18px rgba(0,0,0,0.75);
+    }
+    .user-email {
+      color: rgba(255,255,255,0.78);
+    }
+  }
+
+  // Inputs: borde más visible + texto más fuerte
+  .input-group {
+    label {
+      color: rgba(255,255,255,0.85);
+    }
+
+    .glass-input-wrapper {
+      background: rgba(0,0,0,0.45);
+      border: 1px solid rgba(255,255,255,0.20);
+
+      &:focus-within {
+        border-color: rgba(99, 102, 241, 0.95);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+        background: rgba(0,0,0,0.55);
+      }
+
+      ion-icon {
+        color: rgba(255,255,255,0.85);
+      }
+
+      input, select {
+        color: #ffffff;
+
+        &::placeholder {
+          color: rgba(255,255,255,0.55);
+        }
+      }
+    }
+  }
+
+  // Toggles: track más fuerte
+  .toggle-row {
+    .toggle-label {
+      span { color: #ffffff; }
+      p { color: rgba(255,255,255,0.75); }
+    }
+
+    ion-toggle {
+      --track-background: rgba(255,255,255,0.18);
+      --track-background-checked: rgba(99, 102, 241, 1);
+      --handle-background: #ffffff;
+      --handle-background-checked: #ffffff;
+    }
+  }
+
+  .divider {
+    background: rgba(255,255,255,0.14);
+  }
+
+  // Info rows: subir legibilidad
+  .info-row {
+    border-bottom: 1px solid rgba(255,255,255,0.14);
+
+    span { color: rgba(255,255,255,0.78); }
+    .info-val { color: #ffffff; }
+  }
+
+  // Botones: más contraste
+  .magic-button {
+    box-shadow: 0 10px 35px rgba(99, 102, 241, 0.45);
+  }
+
+  .glass-btn-outline {
+    --background: rgba(255, 255, 255, 0.06);
+    --background-activated: rgba(255, 255, 255, 0.12);
+    --border-color: rgba(255, 255, 255, 0.28);
+    --color: #ffffff;
+  }
+
+  // Modal
+  ion-modal.glass-modal {
+    --background: #050a16;
+
+    .modal-header-text {
+      h1 { color: #ffffff; }
+      p { color: rgba(255,255,255,0.78); }
+    }
+
+    select option {
+      background-color: #0b1224;
+      color: #ffffff;
+    }
+  }
+
+  .card-subtitle { color: #ffffff; }
+  .card-desc { color: rgba(255,255,255,0.78); }
+
+  .hint-text {
+    color: rgba(255,255,255,0.35);
+  }
+}

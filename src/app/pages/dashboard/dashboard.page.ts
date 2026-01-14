@@ -64,7 +64,7 @@ export class DashboardPage implements OnInit, OnDestroy {
   // ---------------------------------------------------------
   // 🎨 CONFIGURACIÓN DE GRÁFICA PIXEL PERFECT (LOVABLE STYLE)
   // ---------------------------------------------------------
-  
+
   // Datos iniciales vacíos
   combinedChartData: ChartConfiguration<'line'>['data'] = {
     labels: [],
@@ -93,8 +93,8 @@ export class DashboardPage implements OnInit, OnDestroy {
     scales: {
       x: {
         // ✅ CORRECCIÓN ERROR ROJO: En Chart.js v4 se usa 'border' en lugar de 'drawBorder'
-        border: { display: false }, 
-        grid: { display: false }, 
+        border: { display: false },
+        grid: { display: false },
         ticks: {
           color: 'rgba(255, 255, 255, 0.4)',
           font: { size: 10, family: "'Inter', sans-serif" },
@@ -149,7 +149,7 @@ export class DashboardPage implements OnInit, OnDestroy {
       const drawLine = (value: number, color: string) => {
         const y = yAxis.getPixelForValue(value);
         if (y < chart.chartArea.top || y > chart.chartArea.bottom) return;
-        
+
         ctx.save();
         ctx.beginPath();
         ctx.moveTo(chart.chartArea.left, y);
@@ -212,7 +212,7 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.currentRangeReadings = [];
     this.userDisplayName = 'Usuario';
     this.userEmail = '';
-    
+
     // Reset Data
     this.combinedChartData = { labels: [], datasets: [] };
 
@@ -348,7 +348,7 @@ export class DashboardPage implements OnInit, OnDestroy {
         alerts: this.alerts,
         chartCanvas: canvas,
       });
-      
+
       // Restaurar estilo clean (sin puntos)
       (chart.options as any).elements = { point: { radius: 0 } };
       chart.update();
@@ -407,43 +407,57 @@ export class DashboardPage implements OnInit, OnDestroy {
         this.currentRangeReadings = rows ?? [];
         const { labels, hr, spo2, hrv } = this.normalizeReadings(this.currentRangeReadings);
 
-        // ✅ ASIGNACIÓN DE COLORES TEMÁTICOS Y RELLENO (AREA CHART)
-        // Usamos fill: 'origin' y colores con transparencia para lograr el efecto "Lovable"
+        // ✅ FIX MOBILE: si solo hay 0-1 puntos en 24h, no hay "curva"
+        // Con pointRadius=0 se ve vacío. Entonces mostramos un punto visible.
+        const points = labels?.length ?? 0;
+        const showSinglePoint = points <= 1;
+
+        const pointRadius = showSinglePoint ? 4 : 0;
+        const pointHoverRadius = showSinglePoint ? 6 : 6;
+
         this.combinedChartData = {
           labels,
           datasets: [
             {
               data: hr,
               label: 'HR (bpm)',
-              borderColor: '#f43f5e',           // Rose-500
-              backgroundColor: 'rgba(244, 63, 94, 0.15)', // Relleno Transparente
-              fill: 'origin',                   // ✅ EFECTO AREA
+              borderColor: '#f43f5e',
+              backgroundColor: 'rgba(244, 63, 94, 0.15)',
+              fill: 'origin',
               yAxisID: 'yHR',
               tension: 0.4,
-              pointRadius: 0
+              pointRadius,
+              pointHoverRadius,
             },
             {
               data: spo2,
               label: 'SpO₂ (%)',
-              borderColor: '#06b6d4',           // Cyan-500
+              borderColor: '#06b6d4',
               backgroundColor: 'rgba(6, 182, 212, 0.15)',
-              fill: 'origin',                   // ✅ EFECTO AREA
+              fill: 'origin',
               yAxisID: 'ySpO2',
               tension: 0.4,
-              pointRadius: 0
+              pointRadius,
+              pointHoverRadius,
             },
             {
               data: hrv,
               label: 'HRV (ms)',
-              borderColor: '#8b5cf6',           // Violet-500
+              borderColor: '#8b5cf6',
               backgroundColor: 'rgba(139, 92, 246, 0.15)',
-              fill: 'origin',                   // ✅ EFECTO AREA
+              fill: 'origin',
               yAxisID: 'yHRV',
               tension: 0.4,
-              pointRadius: 0
+              pointRadius,
+              pointHoverRadius,
             },
           ],
         };
+
+        // Forzar repaint en móvil cuando cambias de rango
+        try {
+          setTimeout(() => this.combinedChart?.update(), 0);
+        } catch {}
 
         this.loadingCombined = false;
       },
@@ -522,7 +536,6 @@ export class DashboardPage implements OnInit, OnDestroy {
     const s = r.status ?? this.computeStatusLocal(r);
     this.status = s;
 
-    // ✅ CORRECCIÓN: Títulos amigables estilo Lovable
     const titles: Record<string, string> = {
       normal: 'Todo en Orden',
       warning: 'Precaución',
@@ -530,12 +543,11 @@ export class DashboardPage implements OnInit, OnDestroy {
     };
     this.statusText = titles[s] || 'Desconocido';
 
-    if (r.reasons?.length) { 
-      this.statusReason = r.reasons.join(' • '); 
-      return; 
+    if (r.reasons?.length) {
+      this.statusReason = r.reasons.join(' • ');
+      return;
     }
-    
-    // Mensajes amigables
+
     if (s === 'risk') this.statusReason = 'Tus signos vitales requieren atención inmediata.';
     else if (s === 'warning') this.statusReason = 'Algunos valores están fuera del rango ideal.';
     else this.statusReason = 'Tus signos vitales están dentro de rangos saludables.';

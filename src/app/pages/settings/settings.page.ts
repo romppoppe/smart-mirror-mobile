@@ -19,7 +19,7 @@ import { updateProfile } from 'firebase/auth';
   templateUrl: './settings.page.html',
   styleUrls: ['./settings.page.scss'],
   standalone: true,
-  imports: [IonicModule, CommonModule, FormsModule]
+  imports: [IonicModule, CommonModule, FormsModule],
 })
 export class SettingsPage implements OnInit, OnDestroy {
   // UI
@@ -43,7 +43,7 @@ export class SettingsPage implements OnInit, OnDestroy {
     sex: 'male',
     weight: null as number | null,
     height: null as number | null,
-    activityLevel: 'moderate'
+    activityLevel: 'moderate',
   };
 
   constructor(
@@ -55,7 +55,9 @@ export class SettingsPage implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
+    // ✅ Estado inicial desde el servicio (ya gestiona localStorage interno)
     this.largeText = this.accessibility.isEnabled();
+    this.highContrast = this.accessibility.isHighContrastEnabled();
 
     // ✅ escuchar cambios reales de sesión/usuario
     this.authSub = this.auth.user$.subscribe(async (user) => {
@@ -77,6 +79,13 @@ export class SettingsPage implements OnInit, OnDestroy {
     });
   }
 
+  // ✅ Ionic: se llama cada vez que vuelves a entrar a la pantalla
+  ionViewWillEnter() {
+    // Re-lee estado por si cambió fuera o al volver de otra pantalla
+    this.largeText = this.accessibility.isEnabled();
+    this.highContrast = this.accessibility.isHighContrastEnabled();
+  }
+
   ngOnDestroy() {
     this.authSub?.unsubscribe();
   }
@@ -92,7 +101,7 @@ export class SettingsPage implements OnInit, OnDestroy {
       sex: 'male',
       weight: null,
       height: null,
-      activityLevel: 'moderate'
+      activityLevel: 'moderate',
     };
   }
 
@@ -105,38 +114,26 @@ export class SettingsPage implements OnInit, OnDestroy {
     const nested: any = (profile as any).data ?? {};
 
     // 1) Vinculación
-    this.linkedDeviceId =
-      (profile as any).linkedDeviceId ??
-      nested.linkedDeviceId ??
-      '';
+    this.linkedDeviceId = (profile as any).linkedDeviceId ?? nested.linkedDeviceId ?? '';
 
     // 2) Nombre / Email
-    const displayNameFromDb =
-      (profile as any).displayName ??
-      nested.displayName ??
-      '';
-
-    const emailFromDb =
-      (profile as any).email ??
-      nested.email ??
-      '';
+    const displayNameFromDb = (profile as any).displayName ?? nested.displayName ?? '';
+    const emailFromDb = (profile as any).email ?? nested.email ?? '';
 
     if (displayNameFromDb) this.profileData.displayName = displayNameFromDb;
     if (emailFromDb) this.profileEmail = emailFromDb;
-    
 
     // 3) Datos médicos
     const age = (profile as any).age ?? nested.age ?? null;
     const sex = (profile as any).sex ?? nested.sex ?? 'male';
     const weightKg = (profile as any).weightKg ?? nested.weightKg ?? null;
     const heightCm = (profile as any).heightCm ?? nested.heightCm ?? null;
-    const activityLevel =
-      (profile as any).activityLevel ?? nested.activityLevel ?? 'moderate';
+    const activityLevel = (profile as any).activityLevel ?? nested.activityLevel ?? 'moderate';
 
-    this.profileData.age = (typeof age === 'number') ? age : null;
-    this.profileData.sex = (sex || 'male');
-    this.profileData.weight = (typeof weightKg === 'number') ? weightKg : null;
-    this.profileData.height = (typeof heightCm === 'number') ? heightCm : null;
+    this.profileData.age = typeof age === 'number' ? age : null;
+    this.profileData.sex = sex || 'male';
+    this.profileData.weight = typeof weightKg === 'number' ? weightKg : null;
+    this.profileData.height = typeof heightCm === 'number' ? heightCm : null;
     this.profileData.activityLevel = activityLevel || 'moderate';
   }
 
@@ -152,20 +149,19 @@ export class SettingsPage implements OnInit, OnDestroy {
         return;
       }
 
-      // ✅ 1) Guardar en Firestore (AHORA SÍ)
+      // ✅ 1) Guardar en Firestore
       const dataToSave: Partial<UserProfileDB> = {
         displayName: cleanName,
         age: this.profileData.age ?? undefined,
         sex: this.profileData.sex,
         weightKg: this.profileData.weight ?? undefined,
         heightCm: this.profileData.height ?? undefined,
-        activityLevel: this.profileData.activityLevel
+        activityLevel: this.profileData.activityLevel,
       };
 
       await this.firestoreService.updateUserProfile(user.uid, dataToSave);
 
-      // ✅ 2) Actualizar Firebase Auth displayName (para que no se revierta al relog)
-      // (Esto es exactamente la opción que escogiste)
+      // ✅ 2) Actualizar Firebase Auth displayName
       await updateProfile(user, { displayName: cleanName });
 
       // ✅ 3) Reflejar en UI inmediato
@@ -193,7 +189,7 @@ export class SettingsPage implements OnInit, OnDestroy {
 
     try {
       await this.firestoreService.updateUserProfile(user.uid, {
-        linkedDeviceId: cleanId
+        linkedDeviceId: cleanId,
       });
 
       this.linkedDeviceId = cleanId;
@@ -206,16 +202,19 @@ export class SettingsPage implements OnInit, OnDestroy {
 
   // --- UI HELPERS ---
   goProfileSetup() {
-  this.router.navigateByUrl('/app/profile-setup');
-}
+    this.router.navigateByUrl('/app/profile-setup');
+  }
 
   toggleLargeText(ev: any) {
-    this.largeText = ev?.detail?.checked === true;
-    this.accessibility.toggle(this.largeText);
+    const enabled = ev?.detail?.checked === true;
+    this.largeText = enabled;
+    this.accessibility.toggle(enabled);
   }
 
   toggleHighContrast(ev: any) {
-    this.highContrast = ev?.detail?.checked === true;
+    const enabled = ev?.detail?.checked === true;
+    this.highContrast = enabled;
+    this.accessibility.setHighContrast(enabled);
   }
 
   async logout() {
@@ -230,7 +229,7 @@ export class SettingsPage implements OnInit, OnDestroy {
       message: msg,
       duration: 2000,
       color,
-      position: 'bottom'
+      position: 'bottom',
     });
     toast.present();
   }

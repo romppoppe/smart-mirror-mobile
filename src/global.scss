@@ -221,3 +221,102 @@ html, body {
     stroke: none;
   }
 }
+
+/* =====================================================
+   ✅ HIGH CONTRAST MODE (GLOBAL)
+   Se activa con class "high-contrast" en html/body
+   ===================================================== */
+
+html.high-contrast,
+body.high-contrast {
+
+  /* Fondo más oscuro para subir contraste */
+  background: #000 !important;
+
+  /* Subimos contraste de texto base */
+  color: #fff;
+
+  /* Ajuste global de tarjetas tipo glass */
+  .glass,
+  .glass-card,
+  .hud-card {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 24px 70px rgba(0,0,0,0.75) !important;
+  }
+
+  /* Brackets más visibles */
+  .hud-brackets::before,
+  .hud-brackets::after {
+    border-color: rgba(255, 255, 255, 0.22) !important;
+  }
+
+  /* Scanlines un poco menos intensas para que no "ensucie" texto */
+  .hud-scanlines {
+    opacity: 0.25 !important;
+  }
+
+  /* Mejor legibilidad de textos secundarios */
+  p, span, small, .subtitle, .subtitle-chart {
+    color: rgba(255,255,255,0.80) !important;
+  }
+
+  /* Headers / títulos en blanco sólido */
+  h1, h2, h3, h4, h5, h6, strong {
+    color: #ffffff !important;
+  }
+
+  /* Botones outline más visibles */
+  button,
+  ion-button {
+    border-color: rgba(255,255,255,0.28) !important;
+  }
+
+  /* Inputs / selects si existen dentro de pantallas HUD */
+  input, select, textarea {
+    color: #ffffff !important;
+    caret-color: #ffffff;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: rgba(255,255,255,0.55) !important;
+  }
+
+  /* Ion Toggle contrast */
+  ion-toggle {
+    --track-background: rgba(255,255,255,0.20) !important;
+    --track-background-checked: rgba(99,102,241,1) !important;
+    --handle-background: #fff !important;
+    --handle-background-checked: #fff !important;
+  }
+}
+/* =========================
+   ACCESIBILIDAD GLOBAL
+   ========================= */
+
+/* =========================
+   ACCESIBILIDAD - TEXTO GRANDE
+   ========================= */
+
+/* ✅ Esto afecta rem (porque rem depende de html) */
+html.large-text {
+  font-size: 130%; /* prueba 125% - 140% */
+}
+
+/* Refuerzo para controles comunes */
+html.large-text ion-title { font-size: 1.15rem; }
+html.large-text ion-label { font-size: 1.05rem; }
+html.large-text ion-button { font-size: 1.02rem; }
+
+html.large-text input,
+html.large-text select,
+html.large-text textarea {
+  font-size: 1.05rem;
+}
+
+/* Alto contraste (ejemplo base, puedes ajustar después) */
+body.high-contrast {
+  --ion-text-color: #ffffff;
+  --ion-color-primary: #00e5ff;
+}

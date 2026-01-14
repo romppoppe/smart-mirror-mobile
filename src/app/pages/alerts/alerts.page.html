@@ -8,9 +8,14 @@
     <header class="hud-header">
       <div class="header-top">
         <div class="brand-group">
-          <div class="logo-box" (click)="goBack()"> 
-            <svg class="lucide-icon"><use href="#lucide-chevron-right" style="transform: rotate(180deg);"></use></svg>
-          </div>
+
+          <!-- ✅ FIX: usar button + el transform en el SVG (no en <use>) -->
+          <button class="logo-box" type="button" (click)="goBack()" aria-label="Volver">
+            <svg class="lucide-icon" style="width: 22px; height: 22px; transform: rotate(180deg);">
+              <use href="#lucide-chevron-right"></use>
+            </svg>
+          </button>
+
           <div class="titles">
             <h1>Alertas</h1>
             <span class="device-badge">Historial de salud</span>
