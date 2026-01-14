@@ -1,111 +1,114 @@
-<ion-content [fullscreen]="true" class="bg-gradient">
+<ion-content [fullscreen]="true" class="bg-hud">
   
-  <div class="login-container">
+  <div class="hud-scanlines"></div>
+  <div class="hud-glow"></div>
 
-    <div class="header-logo">
-      <div class="icon-circle">
-        <ion-icon name="scan-outline"></ion-icon>
+  <div class="main-container login-layout">
+    
+    <div class="login-header">
+      <div class="logo-wrapper animate-pulse-glow">
+        <div class="logo-icon">
+          <svg class="lucide-icon" style="width: 40px; height: 40px;">
+            <use href="#lucide-scan"></use>
+          </svg>
+        </div>
       </div>
-      <h1>Espejo Inteligente</h1>
-      <p class="subtitle">Monitoreo de salud</p>
+      <h1 class="font-display">Espejo Inteligente</h1>
+      <p class="subtitle">Sistema de Monitoreo Biométeico</p>
     </div>
 
-    <div class="glass-card main-card">
+    <div class="hud-card login-card">
+      <div class="hud-brackets"></div>
 
-      <div class="tab-switch">
-        <div class="tab-btn" [class.active]="mode === 'login'" (click)="setMode('login')">
+      <div class="auth-tabs">
+        <button 
+          class="tab-btn" 
+          [class.active]="mode === 'login'" 
+          (click)="setMode('login')">
           Ingresar
-        </div>
-        <div class="tab-btn" [class.active]="mode === 'register'" (click)="setMode('register')">
+        </button>
+        <button 
+          class="tab-btn" 
+          [class.active]="mode === 'register'" 
+          (click)="setMode('register')">
           Registrarse
-        </div>
-        <div class="slider" [class.right]="mode === 'register'"></div>
+        </button>
       </div>
 
-      <div class="info-box glass-alert" *ngIf="mode === 'register'">
-        <ion-icon name="information-circle"></ion-icon>
-        <div>
-          <strong>Paso importante</strong>
-          <p>Al crear tu cuenta deberás <b>Completar tu Perfil</b> para calibrar el espejo.</p>
-        </div>
-      </div>
-
-      <div class="form-content">
-
-        <div class="input-group" *ngIf="mode === 'register'">
-          <label>Nombre</label>
-          <div class="glass-input-wrapper">
-            <ion-icon name="person-outline"></ion-icon>
+      <div class="inputs-stack">
+        
+        <div class="glass-input-group animate-value-update" *ngIf="mode === 'register'">
+          <label>Nombre Completo</label>
+          <div class="glass-input">
+            <svg class="lucide-icon input-icon"><use href="#lucide-person-outline"></use></svg>
             <input 
               type="text" 
-              [(ngModel)]="displayName" 
-              placeholder="Tu nombre"
+              placeholder="Tu nombre" 
+              [(ngModel)]="displayName"
               autocomplete="name"
-              enterkeyhint="next">
+            >
           </div>
         </div>
 
-        <div class="input-group">
-          <label>Correo electrónico</label>
-          <div class="glass-input-wrapper">
-            <ion-icon name="mail-outline"></ion-icon>
+        <div class="glass-input-group">
+          <label>Correo Electrónico</label>
+          <div class="glass-input">
+            <svg class="lucide-icon input-icon"><use href="#lucide-mail-outline"></use></svg>
             <input 
               type="email" 
-              [(ngModel)]="email" 
-              placeholder="ejemplo@correo.com"
+              placeholder="usuario@ejemplo.com" 
+              [(ngModel)]="email"
               autocomplete="email"
               inputmode="email"
-              enterkeyhint="next">
+            >
           </div>
         </div>
 
-        <div class="input-group">
+        <div class="glass-input-group">
           <label>Contraseña</label>
-          <div class="glass-input-wrapper">
-            <ion-icon name="lock-closed-outline"></ion-icon>
-            
-            <input *ngIf="mode === 'login'"
+          <div class="glass-input">
+            <svg class="lucide-icon input-icon"><use href="#lucide-lock-closed-outline"></use></svg>
+            <input 
               type="password" 
-              [(ngModel)]="password" 
-              placeholder="••••••••"
+              placeholder="••••••••" 
+              [(ngModel)]="password"
               autocomplete="current-password"
-              enterkeyhint="go">
-
-            <input *ngIf="mode === 'register'"
-              type="password" 
-              [(ngModel)]="password" 
-              placeholder="Mínimo 6 caracteres"
-              autocomplete="new-password"
-              enterkeyhint="go">
+            >
           </div>
         </div>
-
-        <div class="error-msg" *ngIf="error">
-          <ion-icon name="alert-circle"></ion-icon>
-          <span>{{ error }}</span>
+        
+        <div class="forgot-pass" *ngIf="mode === 'login'">
+          <span (click)="recoverPassword()">¿Olvidaste tu contraseña?</span>
         </div>
-
-        <p class="hint-text" *ngIf="mode === 'register'">
-          Tus datos médicos se almacenan de forma segura.
-        </p>
-
-        <button class="magic-button" (click)="submit()" [disabled]="loading">
-          
-          <ion-spinner name="crescent" *ngIf="loading"></ion-spinner>
-          
-          <span *ngIf="!loading" style="display: flex; align-items: center; gap: 8px;">
-            {{ mode === 'login' ? 'INICIAR SESIÓN' : 'CREAR CUENTA' }}
-            <ion-icon name="arrow-forward-outline"></ion-icon>
-          </span>
-
-        </button>
-
       </div>
-    </div>
-    
-    <div class="footer-copy">
-      <p>Proyecto de Tesis 2026</p>
+
+      <button class="activate-btn" (click)="submit()" [disabled]="loading">
+        <div class="shimmer-effect"></div>
+        <div class="btn-content">
+          <ion-spinner *ngIf="loading" name="crescent" style="width: 20px; height: 20px; color: black;"></ion-spinner>
+          <span *ngIf="!loading">{{ mode === 'login' ? 'INICIAR SESIÓN' : 'CREAR CUENTA' }}</span>
+          <svg *ngIf="!loading" class="lucide-icon"><use href="#lucide-arrow-forward-outline"></use></svg>
+        </div>
+      </button>
+
+      <div class="divider">
+        <span>O continúa con</span>
+      </div>
+
+      <div class="social-grid">
+        <button class="social-btn" (click)="loginGoogle()" [disabled]="loading">
+          <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          Google
+        </button>
+      </div>
+
     </div>
 
+    <p class="footer-text">Proyecto de Tesis 2026</p>
   </div>
 </ion-content>

@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 
-import { auth, db } from '../firebase';
+// Asegúrate de que esta ruta sea correcta según tu estructura
+import { auth, db } from '../firebase'; 
+
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -9,6 +11,10 @@ import {
   updateProfile,
   User,
   onAuthStateChanged,
+  // ✅ NUEVO: Importaciones para Google y Reset Password
+  GoogleAuthProvider,
+  signInWithPopup,
+  sendPasswordResetEmail
 } from 'firebase/auth';
 
 import {
@@ -24,12 +30,8 @@ export type UserProfile = {
   displayName?: string;
   createdAt?: any;
   updatedAt?: any;
-
-  // Campos “tesis” (puedes ampliar)
   age?: number;
   gender?: 'M' | 'F' | 'O';
-
-  // Notificaciones
   fcmToken?: string;
   platform?: string;
   tokenUpdatedAt?: any;
@@ -39,17 +41,14 @@ export type UserProfile = {
 export class AuthService {
   private readonly _user$ = new BehaviorSubject<User | null>(auth.currentUser ?? null);
 
-  /** Observable del usuario autenticado (se actualiza en tiempo real) */
   readonly user$: Observable<User | null> = this._user$.asObservable();
 
-  /** Observable del UID (null si no hay sesión) */
   readonly uid$: Observable<string | null> = new Observable((sub) => {
     const unsub = onAuthStateChanged(auth, (user) => sub.next(user?.uid ?? null));
     return () => unsub();
   });
 
   constructor() {
-    // Mantener user$ sincronizado con Firebase Auth
     onAuthStateChanged(auth, (user) => {
       this._user$.next(user ?? null);
     });
@@ -63,70 +62,93 @@ export class AuthService {
     return this._user$.value?.uid ?? null;
   }
 
-  /** Útil para servicios que NECESITAN uid sí o sí */
   requireUid(): string {
     const uid = this.currentUid();
     if (!uid) throw new Error('No hay sesión activa (uid es null).');
     return uid;
   }
 
-  /** Crea o asegura el documento users/{uid} */
-  // ... tus imports se quedan igual
+  // -------------------------------------------------------------------
+  // ✅ NUEVO: INICIAR SESIÓN CON GOOGLE
+  // -------------------------------------------------------------------
+  async loginWithGoogle() {
+    const provider = new GoogleAuthProvider();
+    
+    // Abre la ventana emergente de Google
+    const cred = await signInWithPopup(auth, provider);
 
-private async ensureUserProfile(uid: string, email: string, displayName?: string) {
-  const ref = doc(db, 'users', uid);
-  const snap = await getDoc(ref);
+    // Una vez logueado, aseguramos que exista en Firestore
+    await this.ensureUserProfile(
+      cred.user.uid,
+      cred.user.email || '',
+      cred.user.displayName || 'Usuario Google'
+    );
 
-  const existing = snap.exists() ? (snap.data() as any) : null;
-  const existingName = (existing?.data?.displayName ?? existing?.displayName ?? '').toString().trim();
-  const incomingName = (displayName ?? '').toString().trim();
+    return cred.user;
+  }
 
-  // ✅ solo ponemos nombre si todavía no existe uno en Firestore
-  const shouldWriteName = !existingName && incomingName.length > 0;
+  // -------------------------------------------------------------------
+  // ✅ NUEVO: RECUPERAR CONTRASEÑA
+  // -------------------------------------------------------------------
+  async recoverPassword(email: string) {
+    // Firebase envía un correo con un link mágico para resetear
+    await sendPasswordResetEmail(auth, email);
+  }
 
-  const payload: any = {
-    uid,
-    email,
-    updatedAt: serverTimestamp(),
-    data: {
+  // -------------------------------------------------------------------
+  // MÉTODOS EXISTENTES (Mantienen tu lógica original)
+  // -------------------------------------------------------------------
+
+  private async ensureUserProfile(uid: string, email: string, displayName?: string) {
+    const ref = doc(db, 'users', uid);
+    const snap = await getDoc(ref);
+
+    const existing = snap.exists() ? (snap.data() as any) : null;
+    const existingName = (existing?.data?.displayName ?? existing?.displayName ?? '').toString().trim();
+    const incomingName = (displayName ?? '').toString().trim();
+
+    const shouldWriteName = !existingName && incomingName.length > 0;
+
+    const payload: any = {
       uid,
       email,
-      ...(shouldWriteName ? { displayName: incomingName } : {}),
-    },
-  };
+      updatedAt: serverTimestamp(),
+      data: { // Manteniendo tu estructura de "data" interna si así la usas
+        uid,
+        email,
+        ...(shouldWriteName ? { displayName: incomingName } : {}),
+      },
+    };
 
-  if (!snap.exists()) {
-    payload.createdAt = serverTimestamp();
+    if (!snap.exists()) {
+      payload.createdAt = serverTimestamp();
+    }
+
+    if (shouldWriteName) {
+      payload.displayName = incomingName;
+    }
+
+    await setDoc(ref, payload, { merge: true });
   }
 
-  if (shouldWriteName) {
-    payload.displayName = incomingName; // opcional mantener root
+  async setAuthDisplayName(displayName: string) {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const clean = (displayName || '').trim();
+    if (!clean) return;
+    if ((user.displayName || '').trim() === clean) return;
+
+    await updateProfile(user, { displayName: clean });
+    this._user$.next(auth.currentUser ?? null);
   }
-
-  await setDoc(ref, payload, { merge: true });
-}
-
-/** ✅ Para que Auth también tenga el nombre actualizado */
-async setAuthDisplayName(displayName: string) {
-  const user = auth.currentUser;
-  if (!user) return;
-
-  const clean = (displayName || '').trim();
-  if (!clean) return;
-  if ((user.displayName || '').trim() === clean) return;
-
-  await updateProfile(user, { displayName: clean });
-
-  // fuerza a tu app a ver el cambio en el BehaviorSubject
-  this._user$.next(auth.currentUser ?? null);
-}
 
   async saveFcmToken(uid: string, token: string) {
     await setDoc(
       doc(db, 'users', uid),
       {
         fcmToken: token,
-        platform: 'android',
+        platform: 'android', // Ojo: si luego lo haces para iOS o Web, esto debería ser dinámico
         tokenUpdatedAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       },
@@ -153,7 +175,6 @@ async setAuthDisplayName(displayName: string) {
   async login(email: string, password: string) {
     const cred = await signInWithEmailAndPassword(auth, email, password);
 
-    // Asegura perfil y refresca updatedAt
     await this.ensureUserProfile(
       cred.user.uid,
       cred.user.email ?? email,
@@ -164,8 +185,6 @@ async setAuthDisplayName(displayName: string) {
   }
 
   async logout() {
-    // Importante: aquí solo cerramos sesión.
-    // El resto de la app debe escuchar uid$ / user$ y limpiar datos en UI al quedar null.
     await signOut(auth);
   }
 }
