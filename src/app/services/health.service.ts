@@ -17,6 +17,7 @@ import {
   QuerySnapshot,
   DocumentData,
   where,
+  Timestamp,
 } from 'firebase/firestore';
 
 export type VitalStatus = 'normal' | 'warning' | 'risk';
@@ -32,8 +33,8 @@ export type VitalReading = {
   status?: VitalStatus;
   reasons?: string[];
 
-  ts?: any;          // a veces viene como Timestamp o ms
-  deviceTs?: number; // ✅ ESTE ES EL CAMPO REAL EN TU BD (epoch seconds)
+  ts?: any;          // Timestamp (ideal) o ms
+  deviceTs?: number; // epoch seconds (del dispositivo)
 
   evaluatedAt?: any;
   source?: string;
@@ -70,7 +71,11 @@ export type AlertEvent = {
   level?: string;
 };
 
-const ORDER_FIELD: 'deviceTs' = 'deviceTs';
+// ✅ EN MÓVIL: usar "ts" para ordenar (coincide con tu monitor y evita desfases de deviceTs)
+const ORDER_FIELD_TS: 'ts' = 'ts';
+
+// (lo dejamos declarado por si lo necesitas en el futuro sin romper nada)
+const ORDER_FIELD_DEVICE: 'deviceTs' = 'deviceTs';
 
 @Injectable({ providedIn: 'root' })
 export class HealthService {
@@ -82,7 +87,10 @@ export class HealthService {
     return collection(db, 'alerts', uid, 'events');
   }
 
-  /** ✅ Última lectura REAL: orderBy(deviceTs desc) */
+  /** ✅ Última lectura REAL: orderBy(ts desc)
+   *  - Evita el bug de deviceTs desfasado.
+   *  - Documentos sin ts quedan al final (no rompen).
+   */
   latestReading$(): Observable<VitalReading | null> {
     return new Observable<VitalReading | null>((sub) => {
       let unsubSnap: (() => void) | null = null;
@@ -96,7 +104,7 @@ export class HealthService {
         }
 
         const colRef = this.vitalsCol(user.uid);
-        const q = query(colRef, orderBy(ORDER_FIELD, 'desc'), limit(1));
+        const q = query(colRef, orderBy(ORDER_FIELD_TS, 'desc'), limit(1));
 
         unsubSnap = onSnapshot(
           q,
@@ -123,7 +131,7 @@ export class HealthService {
     });
   }
 
-  /** ✅ Historial por cantidad */
+  /** ✅ Historial por cantidad (ordenado por ts desc) */
   lastReadings$(take = 50): Observable<VitalReading[]> {
     return new Observable<VitalReading[]>((sub) => {
       let unsubSnap: (() => void) | null = null;
@@ -137,7 +145,7 @@ export class HealthService {
         }
 
         const colRef = this.vitalsCol(user.uid);
-        const q = query(colRef, orderBy(ORDER_FIELD, 'desc'), limit(take));
+        const q = query(colRef, orderBy(ORDER_FIELD_TS, 'desc'), limit(take));
 
         unsubSnap = onSnapshot(
           q,
@@ -162,7 +170,7 @@ export class HealthService {
     });
   }
 
-  /** ✅ Historial por rango (horas atrás) usando deviceTs */
+  /** ✅ Historial por rango (horas atrás) usando ts (Timestamp) */
   lastReadingsByRange$(hoursBack: number): Observable<VitalReading[]> {
     return new Observable<VitalReading[]>((sub) => {
       let unsubSnap: (() => void) | null = null;
@@ -175,14 +183,16 @@ export class HealthService {
           return;
         }
 
-        const nowSec = Math.floor(Date.now() / 1000);
-        const sinceSec = nowSec - hoursBack * 60 * 60;
+        const sinceMs = Date.now() - hoursBack * 60 * 60 * 1000;
+        const sinceTs = Timestamp.fromMillis(sinceMs);
 
         const colRef = this.vitalsCol(user.uid);
+
+        // ✅ where + orderBy en el MISMO campo (ts) => estable y sin líos de deviceTs
         const q = query(
           colRef,
-          where(ORDER_FIELD, '>=', sinceSec),
-          orderBy(ORDER_FIELD, 'desc')
+          where(ORDER_FIELD_TS, '>=', sinceTs),
+          orderBy(ORDER_FIELD_TS, 'desc')
         );
 
         unsubSnap = onSnapshot(
