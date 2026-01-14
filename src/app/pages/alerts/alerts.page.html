@@ -1,72 +1,119 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-title>Alertas</ion-title>
-  </ion-toolbar>
-</ion-header>
+<ion-content [fullscreen]="true" class="bg-hud">
+  
+  <div class="hud-scanlines"></div>
+  <div class="hud-glow"></div>
 
-<ion-content class="ion-padding">
+  <div class="main-container ion-padding-bottom">
 
-  <ion-segment [(ngModel)]="filter">
-    <ion-segment-button value="pending">
-      <ion-label>Pendientes</ion-label>
-    </ion-segment-button>
-    <ion-segment-button value="all">
-      <ion-label>Todas</ion-label>
-    </ion-segment-button>
-  </ion-segment>
+    <header class="hud-header">
+      <div class="header-top">
+        <div class="brand-group">
+          <div class="logo-box" (click)="goBack()"> 
+            <svg class="lucide-icon"><use href="#lucide-chevron-right" style="transform: rotate(180deg);"></use></svg>
+          </div>
+          <div class="titles">
+            <h1>Alertas</h1>
+            <span class="device-badge">Historial de salud</span>
+          </div>
+        </div>
+      </div>
+    </header>
 
-  <div *ngIf="loading" class="ion-padding ion-text-center">
-    <ion-spinner name="crescent"></ion-spinner>
-    <p>Cargando alertas...</p>
+    <div class="content-stack">
+
+      <div class="filter-container">
+        <div class="custom-segment">
+          <button 
+            [class.active]="filter === 'pending'" 
+            (click)="filter = 'pending'"
+            class="segment-btn">
+            Pendientes
+          </button>
+          <button 
+            [class.active]="filter === 'all'" 
+            (click)="filter = 'all'"
+            class="segment-btn">
+            Historial Completo
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="loading" class="loading-state">
+        <ion-spinner name="crescent" style="color: var(--ion-color-primary);"></ion-spinner>
+        <p>Recuperando datos...</p>
+      </div>
+
+      <div *ngIf="!loading && shownAlerts.length === 0" class="empty-state">
+        <div class="icon-circle">
+          <svg class="lucide-icon"><use href="#lucide-check-circle2"></use></svg>
+        </div>
+        <h3>Todo despejado</h3>
+        <p>No hay alertas {{ filter === 'pending' ? 'pendientes' : 'registradas' }} por ahora.</p>
+      </div>
+
+      <div class="alerts-list">
+        <div 
+          class="hud-card alert-item" 
+          *ngFor="let a of shownAlerts"
+          [class.handled-item]="a.handled"
+          [class.risk]="getStatus(a) === 'risk'" 
+          [class.warning]="getStatus(a) === 'warning'">
+          
+          <div class="hud-brackets"></div>
+
+          <div class="alert-content">
+            <div class="alert-header">
+              <div class="meta-left">
+                <span class="status-badge">
+                  {{ statusLabel(getStatus(a)) }}
+                </span>
+                <span class="timestamp">
+                  {{ formatTs(a.createdAt) }}
+                </span>
+              </div>
+              <div class="icon-indicator">
+                <svg *ngIf="a.handled" class="lucide-icon"><use href="#lucide-check-circle2"></use></svg>
+                <svg *ngIf="!a.handled" class="lucide-icon"><use href="#lucide-bell"></use></svg>
+              </div>
+            </div>
+
+            <div class="reasons-list" *ngIf="a.reasons?.length">
+              <p *ngFor="let r of a.reasons">
+                <svg class="lucide-icon bullet"><use href="#lucide-alert-circle"></use></svg>
+                {{ r }}
+              </p>
+            </div>
+
+            <div class="vitals-row">
+              <div class="vital-pill" *ngIf="a.vitals?.hr != null">
+                <svg class="lucide-icon"><use href="#lucide-heart"></use></svg>
+                <span>{{ a.vitals?.hr }} bpm</span>
+              </div>
+              <div class="vital-pill" *ngIf="a.vitals?.spo2 != null">
+                <svg class="lucide-icon"><use href="#lucide-droplets"></use></svg>
+                <span>{{ a.vitals?.spo2 }}%</span>
+              </div>
+              <div class="vital-pill" *ngIf="a.vitals?.temp != null">
+                <svg class="lucide-icon"><use href="#lucide-activity"></use></svg>
+                <span>{{ a.vitals?.temp }}°C</span>
+              </div>
+            </div>
+
+            <button 
+              *ngIf="a.handled !== true" 
+              class="action-btn" 
+              (click)="markAsHandled(a)">
+              Marcar como atendida
+            </button>
+
+            <div *ngIf="a.handled === true" class="handled-note">
+              Atendida el {{ formatTs(a.handledAt || a.createdAt) }}
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
-
-  <div *ngIf="!loading && shownAlerts.length === 0" class="ion-padding ion-text-center">
-    <ion-icon name="checkmark-circle-outline" style="font-size: 42px;"></ion-icon>
-    <h2>No hay alertas {{ filter === 'pending' ? 'pendientes' : '' }}</h2>
-  </div>
-
-  <ion-card *ngFor="let a of shownAlerts">
-    <ion-card-header>
-      <ion-badge [color]="statusColor(a.status)" style="font-size: 14px;">
-        {{ statusLabel(a.status) }}
-      </ion-badge>
-      <div style="margin-top: 8px; font-size: 15px; opacity: 0.85;">
-        {{ formatTs(a.createdAt) }}
-      </div>
-    </ion-card-header>
-
-    <ion-card-content>
-      <div *ngIf="a.reasons?.length">
-        <ion-chip *ngFor="let r of a.reasons" color="medium">
-          <ion-label>{{ r }}</ion-label>
-        </ion-chip>
-      </div>
-
-      <div style="margin-top: 10px; display:flex; gap: 10px; flex-wrap: wrap;">
-        <ion-chip *ngIf="a.vitals?.hr != null">
-          <ion-label>HR: {{ a.vitals?.hr }} bpm</ion-label>
-        </ion-chip>
-        <ion-chip *ngIf="a.vitals?.spo2 != null">
-          <ion-label>SpO₂: {{ a.vitals?.spo2 }}%</ion-label>
-        </ion-chip>
-        <ion-chip *ngIf="a.vitals?.temp != null">
-          <ion-label>Temp: {{ a.vitals?.temp }}°C</ion-label>
-        </ion-chip>
-      </div>
-
-      <ion-button
-        *ngIf="a.handled !== true"
-        expand="block"
-        color="success"
-        (click)="markAsHandled(a)"
-        style="margin-top: 12px;">
-        Marcar como atendida
-      </ion-button>
-
-      <ion-note *ngIf="a.handled === true" color="medium">
-        Atendida ✅
-      </ion-note>
-    </ion-card-content>
-  </ion-card>
-
 </ion-content>

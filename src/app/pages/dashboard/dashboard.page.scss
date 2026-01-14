@@ -1,252 +1,320 @@
-// 🌌 FONDO GLOBAL (Gradiente Profundo)
-ion-content.bg-gradient {
-  --background: linear-gradient(180deg, #0f172a 0%, #171717 100%);
+// ---------------- LAYOUT BASE ----------------
+ion-content.bg-hud {
+  --background: hsl(var(--bg-hsl));
 }
 
-// 👤 HEADER
-.header-section {
-  margin-bottom: 24px;
-  
-  .profile-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-  }
-
-  .greeting {
-    font-size: 28px;
-    font-weight: 700;
-    color: #ffffff;
-    margin: 0;
-    letter-spacing: -0.5px;
-  }
-
-  .subtitle {
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.6);
-    margin: 4px 0 0 0;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-
-    ion-icon { font-size: 16px; color: #38bdf8; } // Azul Cyan
-  }
+.hud-glow {
+  position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; height: 350px;
+  background: radial-gradient(ellipse at top, hsla(var(--primary-hsl), 0.15), transparent 70%);
+  pointer-events: none; z-index: 0;
 }
 
-// 🚀 BOTÓN MÁGICO (Usar Espejo)
-.magic-button {
-  width: 100%;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); // Indigo -> Violeta
-  border: none;
-  border-radius: 20px;
-  padding: 16px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
-  transition: transform 0.2s active;
-  margin-bottom: 30px;
+.main-container {
+  position: relative; z-index: 10; max-width: 600px; margin: 0 auto; padding: 0 16px;
+}
+.content-stack { display: flex; flex-direction: column; gap: 16px; }
 
-  &:active {
-    transform: scale(0.98);
-    opacity: 0.9;
-  }
+// ---------------- 1. HEADER ----------------
+.hud-header {
+  padding: 20px 0 10px;
+  .header-top { display: flex; justify-content: space-between; align-items: center; }
 
-  .icon-box {
-    width: 44px;
-    height: 44px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    color: white;
-  }
-
-  .text-box {
-    flex: 1;
-    text-align: left;
-    padding-left: 16px;
-    
-    h3 {
-      margin: 0;
-      color: white;
-      font-size: 16px;
-      font-weight: 600;
+  .brand-group {
+    display: flex; align-items: center; gap: 12px;
+    .logo-box {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, hsl(var(--primary-hsl)), hsl(200, 100%, 40%));
+      border-radius: 14px; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 20px hsla(var(--primary-hsl), 0.3);
+      .logo-spin { animation: spin-slow 20s linear infinite; display: flex; }
+      .lucide-icon { color: hsl(var(--bg-hsl)); width: 24px; height: 24px; }
     }
-    p {
-      margin: 2px 0 0 0;
-      color: rgba(255, 255, 255, 0.8);
-      font-size: 13px;
+    .titles {
+      h1 { font-family: var(--font-hud); font-size: 19px; margin: 0; font-weight: 700; color: white; }
+      .device-badge {
+        display: inline-flex; align-items: center; gap: 4px; font-size: 11px;
+        color: #64748b; background: rgba(255,255,255,0.03); padding: 2px 8px; border-radius: 100px;
+        border: 1px solid rgba(255,255,255,0.05); margin-top: 4px;
+        &.connected {
+          color: hsl(var(--primary-hsl)); border-color: hsla(var(--primary-hsl), 0.3);
+          background: hsla(var(--primary-hsl), 0.05);
+        }
+      }
     }
   }
 
-  .arrow {
-    color: white;
-    font-size: 20px;
-    opacity: 0.8;
-  }
-}
-
-// 🧊 TARJETAS DE VIDRIO (Glassmorphism Core)
-.glass-card {
-  background: rgba(255, 255, 255, 0.03); // Transparencia muy baja
-  backdrop-filter: blur(20px);           // El efecto borroso
-  -webkit-backdrop-filter: blur(20px);   // Safari support
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 24px;
-  padding: 24px;
-  margin-bottom: 20px;
-  position: relative;
-  overflow: hidden;
-
-  // Brillo superior
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-  }
-
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-
-    .card-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: rgba(255, 255, 255, 0.9);
-    }
-  }
-}
-
-// 📊 ESTADO ACTUAL
-.status-card {
-  .status-badge {
-    padding: 6px 12px;
-    border-radius: 100px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    
-    &.normal { background: rgba(34, 197, 94, 0.2); color: #4ade80; } // Verde neón
-    &.warning { background: rgba(234, 179, 8, 0.2); color: #facc15; } // Amarillo neón
-    &.risk { background: rgba(239, 68, 68, 0.2); color: #f87171; }    // Rojo neón
-  }
-
-  .status-reason {
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 13px;
-    margin-bottom: 20px;
-  }
-
-  .stats-grid {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-
-    .stat-item {
-      flex: 1;
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 16px;
-      padding: 16px 8px;
-      text-align: center;
+  .header-actions {
+    display: flex; gap: 8px;
+    .icon-btn {
+      width: 42px; height: 42px; border-radius: 14px; background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08); color: hsl(var(--fg-hsl));
+      display: flex; align-items: center; justify-content: center; position: relative;
+      .lucide-icon { width: 20px; height: 20px; }
       
-      .label {
-        display: block;
-        font-size: 12px;
-        color: rgba(255, 255, 255, 0.5);
-        margin-bottom: 4px;
-        text-transform: uppercase;
-      }
-      .value {
-        font-size: 24px;
-        font-weight: 700;
-        color: white;
-      }
-      .unit {
-        font-size: 12px;
-        color: rgba(255, 255, 255, 0.4);
-        margin-left: 2px;
+      .badge-dot {
+        position: absolute; top: -2px; right: -2px; background: hsl(var(--health-risk));
+        color: white; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px;
+        border-radius: 8px; display: flex; align-items: center; justify-content: center;
+        border: 2px solid hsl(var(--bg-hsl));
       }
     }
   }
 }
 
-// 📈 GRÁFICA
-.chart-card {
-  .pill-selector {
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 100px;
-    padding: 4px;
-    display: flex;
-    gap: 4px;
+// ---------------- TARJETA BASE ----------------
+.hud-card {
+  background: linear-gradient(135deg, hsla(220, 60%, 8%, 0.8), hsla(220, 40%, 5%, 0.95));
+  backdrop-filter: blur(24px); border-radius: 24px;
+  padding: 24px; position: relative; overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.05);
+  box-shadow: 0 0 60px -20px rgba(0,0,0,0.5);
+}
 
-    span {
-      font-size: 12px;
-      color: rgba(255, 255, 255, 0.5);
-      padding: 6px 12px;
-      border-radius: 20px;
+// ---------------- 2. ESTADO DE SALUD (LOVABLE STYLE) ----------------
+.health-status {
+  transition: all 0.4s ease;
+
+  &.normal { 
+    border-color: hsla(var(--health-normal), 0.3); 
+    background: linear-gradient(135deg, hsla(var(--health-normal), 0.08), hsla(220, 60%, 10%, 0.6)); 
+  }
+  &.warning { 
+    border-color: hsla(var(--health-warning), 0.3); 
+    background: linear-gradient(135deg, hsla(var(--health-warning), 0.08), hsla(220, 60%, 10%, 0.6)); 
+  }
+  &.risk { 
+    border-color: hsla(var(--health-risk), 0.3); 
+    background: linear-gradient(135deg, hsla(var(--health-risk), 0.08), hsla(220, 60%, 10%, 0.6)); 
+  }
+
+  .card-content-wrapper { 
+    display: flex; gap: 20px; align-items: center; position: relative; z-index: 1; 
+  }
+  
+  .status-left {
+    .status-icon-wrapper {
+      position: relative; width: 56px; height: 56px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      
+      .lucide-icon { width: 28px; height: 28px; stroke-width: 3px; }
+
+      .pulse-ring {
+        position: absolute; inset: -4px; border-radius: 50%;
+        border: 2px solid currentColor; opacity: 0; z-index: -1;
+      }
+    }
+
+    .normal & .status-icon-wrapper { 
+      background: hsla(var(--health-normal), 0.2); color: hsl(var(--health-normal)); 
+      .pulse-ring { animation: pulse-ring-anim 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    }
+    .warning & .status-icon-wrapper { 
+      background: hsla(var(--health-warning), 0.2); color: hsl(var(--health-warning)); 
+      .pulse-ring { animation: pulse-ring-anim 2s infinite; }
+    }
+    .risk & .status-icon-wrapper { 
+      background: hsla(var(--health-risk), 0.2); color: hsl(var(--health-risk)); 
+      animation: pulse-glow 1s infinite;
+    }
+  }
+
+  .status-right {
+    flex: 1;
+    .status-badge-row {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
+      h2 { font-family: var(--font-hud); font-size: 19px; font-weight: 700; color: white; margin: 0; letter-spacing: 0.5px; }
+      .status-pill {
+        font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 6px; 
+        font-family: var(--font-hud); letter-spacing: 0.5px; text-transform: uppercase;
+      }
+      .normal & .status-pill { background: hsla(var(--health-normal), 0.2); color: hsl(var(--health-normal)); }
+      .warning & .status-pill { background: hsla(var(--health-warning), 0.2); color: hsl(var(--health-warning)); }
+      .risk & .status-pill { background: hsla(var(--health-risk), 0.2); color: hsl(var(--health-risk)); }
+    }
+    
+    .reason-text { font-size: 13px; color: #94a3b8; margin: 0 0 14px 0; line-height: 1.4; font-weight: 500; }
+
+    .mini-pills-row {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      .mini-pill {
+        font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 12px;
+        display: flex; align-items: center; gap: 6px;
+        background: rgba(15, 23, 42, 0.6); border: 1px solid transparent;
+        .lucide-icon { width: 14px; height: 14px; }
+        
+        &.hr { background: linear-gradient(90deg, hsla(350, 85%, 60%, 0.15), transparent); color: hsl(350, 85%, 60%); border-color: hsla(350, 85%, 60%, 0.2); }
+        &.spo2 { background: linear-gradient(90deg, hsla(200, 100%, 55%, 0.15), transparent); color: hsl(200, 100%, 55%); border-color: hsla(200, 100%, 55%, 0.2); }
+        &.hrv { background: linear-gradient(90deg, hsla(280, 80%, 60%, 0.15), transparent); color: hsl(280, 80%, 60%); border-color: hsla(280, 80%, 60%, 0.2); }
+      }
+    }
+  }
+}
+
+@keyframes pulse-ring-anim {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+// ---------------- 3. MIRROR CONTROL ----------------
+.mirror-control {
+  .control-header {
+    display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;
+    h3 { font-family: var(--font-hud); font-size: 18px; font-weight: 700; color: white; margin: 0 0 4px 0; }
+    p { font-size: 13px; color: #94a3b8; margin: 0; }
+    .secure-badge {
+      font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 100px;
+      background: hsla(185, 100%, 50%, 0.1); color: hsl(var(--primary-hsl));
+      display: flex; align-items: center; gap: 4px; white-space: nowrap;
+    }
+  }
+
+  .activate-btn {
+    position: relative; width: 100%; height: 56px; border: none; border-radius: 16px;
+    background: linear-gradient(90deg, hsl(var(--primary-hsl)), hsl(185, 100%, 40%));
+    color: hsl(var(--bg-hsl)); font-family: var(--font-hud); font-weight: 700; font-size: 15px;
+    overflow: hidden; box-shadow: 0 0 20px hsla(var(--primary-hsl), 0.3);
+    margin-bottom: 16px;
+    
+    .btn-content { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .shimmer-effect {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      animation: shimmer-slide 3s infinite;
+    }
+    &:active { transform: scale(0.98); opacity: 0.95; }
+  }
+  .tip-text { font-size: 11px; color: #94a3b8; text-align: center; margin: 0; }
+}
+
+// ---------------- 4. VITAL CARDS ----------------
+.vitals-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+
+  .vital-card {
+    @extend .hud-card;
+    padding: 16px; height: 140px; border-radius: 20px;
+    display: flex; flex-direction: column; justify-content: space-between;
+
+    .vital-header {
+      margin-bottom: 8px;
+      .icon-box {
+        width: 36px; height: 36px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        .lucide-icon { color: white; width: 18px; height: 18px; }
+      }
+    }
+
+    .vital-body {
+      .value { font-family: var(--font-hud); font-size: 26px; font-weight: 700; color: white; display: block; line-height: 1; }
+      .unit { font-size: 12px; color: #94a3b8; margin-top: 2px; display: block; }
+    }
+
+    .progress-track {
+      width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 100px; overflow: hidden; margin-top: auto; margin-bottom: 6px;
+      .progress-bar { height: 100%; border-radius: 100px; }
+    }
+    .vital-label { font-size: 10px; font-weight: 600; color: #64748b; letter-spacing: 0.5px; }
+  }
+}
+
+// ---------------- 5. ALERT BANNER ----------------
+.alert-banner {
+  @extend .hud-card;
+  padding: 16px; display: flex; align-items: center; gap: 16px; border-radius: 20px; margin-top: 4px;
+  
+  .bell-box {
+    width: 40px; height: 40px; background: hsla(35, 100%, 55%, 0.2); border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    .lucide-icon { color: hsl(var(--health-warning)); width: 20px; height: 20px; }
+  }
+  .text {
+    flex: 1;
+    strong { display: block; color: white; font-size: 14px; margin-bottom: 2px; }
+    span { color: #94a3b8; font-size: 12px; }
+  }
+  .lucide-icon { width: 20px; height: 20px; }
+}
+
+// ---------------- 6. CHART SECTION ----------------
+.chart-section {
+  .chart-header {
+    display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;
+    h3 { font-family: var(--font-hud); font-size: 18px; font-weight: 700; color: white; margin: 0; }
+    .subtitle-chart { font-size: 12px; color: #94a3b8; margin: 2px 0 0 0; }
+    
+    .chart-pills {
+      background: rgba(255,255,255,0.03); padding: 4px; border-radius: 12px; display: flex; gap: 4px;
+      span {
+        font-size: 11px; padding: 6px 12px; border-radius: 8px; color: #94a3b8; font-weight: 600; cursor: pointer;
+        &.active { background: hsl(var(--primary-hsl)); color: hsl(var(--bg-hsl)); box-shadow: 0 2px 8px hsla(var(--primary-hsl), 0.3); }
+      }
+    }
+  }
+  .chart-wrapper { height: 200px; width: 100%; }
+}
+
+// LEYENDA Y NOTAS
+.chart-legend {
+  display: flex; justify-content: center; gap: 20px; margin-top: 12px;
+  .legend-item {
+    display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: #cbd5e1;
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      &.hr { background: #f43f5e; box-shadow: 0 0 6px rgba(244, 63, 94, 0.5); }
+      &.spo2 { background: #06b6d4; box-shadow: 0 0 6px rgba(6, 182, 212, 0.5); }
+      &.hrv { background: #8b5cf6; box-shadow: 0 0 6px rgba(139, 92, 246, 0.5); }
+    }
+  }
+}
+.chart-footer-note { text-align: center; font-size: 10px; color: rgba(255, 255, 255, 0.3); margin-top: 10px; }
+
+// ---------------- 7. REPORT SECTION & BUTTONS ----------------
+.report-section {
+  margin-top: 10px;
+  .section-title {
+    font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 1px;
+    text-transform: uppercase; margin-bottom: 12px; padding-left: 4px;
+  }
+
+  .actions-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+    
+    .action-btn {
+      height: 52px; border-radius: 14px; font-size: 13px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
       transition: all 0.2s;
-      cursor: pointer;
+      
+      .lucide-icon { width: 18px; height: 18px; }
 
-      &.active {
-        background: rgba(255, 255, 255, 0.15);
-        color: white;
-        font-weight: 600;
+      // Outline (PDF)
+      &.outline {
+        background: transparent; border: 1px solid rgba(255,255,255,0.15); color: white;
+        &:active { background: rgba(255,255,255,0.05); }
+      }
+
+      // Filled (Compartir - Cian)
+      &.filled {
+        background: linear-gradient(90deg, #22d3ee, #3b82f6);
+        border: none; color: #0f172a; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+        &:active { transform: scale(0.98); opacity: 0.9; }
+        .lucide-icon { stroke: #0f172a; }
       }
     }
   }
+}
 
-  .chart-container {
-    height: 220px;
-    width: 100%;
-    margin-top: 10px;
+// ---------------- FAB ----------------
+.hud-fab {
+  ion-fab-button {
+    --background: linear-gradient(135deg, hsl(var(--primary-hsl)), hsl(185, 100%, 40%));
+    --color: hsl(var(--bg-hsl));
+    --box-shadow: 0 0 30px hsla(var(--primary-hsl), 0.5);
+    width: 60px; height: 60px;
+    .scan-rotate { animation: spin-slow 8s linear infinite; display: flex; }
+    .lucide-icon { width: 24px; height: 24px; }
   }
 }
 
-// 🔘 ACCIONES SECUNDARIAS (Botones pequeños)
-.actions-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-
-  .glass-btn {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: background 0.2s;
-
-    &:active {
-      background: rgba(255, 255, 255, 0.1);
-    }
-
-    ion-icon {
-      font-size: 24px;
-      color: #cbd5e1;
-    }
-
-    span {
-      font-size: 12px;
-      color: rgba(255, 255, 255, 0.8);
-      font-weight: 500;
-    }
-  }
-}
-
-// ☠️ ESTILOS DE EMERGENCIA
-.no-data {
-  text-align: center;
-  color: rgba(255, 255, 255, 0.4);
-  font-size: 14px;
-  padding: 20px 0;
-}
+@keyframes spin-slow { 100% { transform: rotate(360deg); } }
+.animate-beat { animation: heartbeat 1.5s infinite; }

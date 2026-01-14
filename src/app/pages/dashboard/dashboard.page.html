@@ -1,124 +1,241 @@
-<ion-content [fullscreen]="true" class="bg-gradient">
+<ion-content [fullscreen]="true" class="bg-hud">
   
-  <div class="header-section ion-padding-top ion-padding-horizontal">
-    <div class="profile-row">
-      <div>
-        <h1 class="greeting">
-          Hola, 
-          <ng-container *ngIf="auth.currentUser; else loadingName">
-            {{ (userDisplayName || 'Usuario').split(' ')[0] }}
-          </ng-container>
-          <ng-template #loadingName>...</ng-template>
-        </h1>
+  <div class="hud-scanlines"></div>
+  <div class="hud-glow"></div>
+
+  <div class="main-container ion-padding-bottom">
+    
+    <header class="hud-header">
+      <div class="header-top">
+        <div class="brand-group">
+          <div class="logo-box">
+            <div class="logo-spin">
+              <svg class="lucide-icon"><use href="#lucide-scan"></use></svg>
+            </div>
+          </div>
+          <div class="titles">
+            <h1>Smart Mirror</h1>
+            <span class="device-badge" [class.connected]="linkedDeviceId && linkedDeviceId !== 'Sin vincular'">
+              <svg class="lucide-icon" style="font-size: 14px; margin-right: 4px;"><use href="#lucide-watch"></use></svg>
+              {{ linkedDeviceId || 'Buscando...' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button class="icon-btn" (click)="toggleLargeText({detail: {checked: !largeText}})">
+             <svg class="lucide-icon"><use href="#lucide-type"></use></svg>
+          </button>
+          <button class="icon-btn" (click)="goAlerts()">
+            <div class="badge-dot" *ngIf="unreadAlerts > 0">{{ unreadAlerts }}</div>
+             <svg class="lucide-icon"><use href="#lucide-bell"></use></svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="content-stack">
+
+      <div class="hud-card health-status" [ngClass]="status">
+        <div class="hud-brackets"></div>
         
-        <p class="subtitle">
-          <ion-icon name="bluetooth-outline"></ion-icon>
-          {{ linkedDeviceId || 'Sincronizando...' }}
-        </p>
-      </div>
+        <div class="card-content-wrapper">
+          <div class="status-left">
+            <div class="status-icon-wrapper">
+              <div class="pulse-ring"></div>
+              <svg *ngIf="status === 'normal'" class="lucide-icon"><use href="#lucide-check-circle2"></use></svg>
+              <svg *ngIf="status === 'warning'" class="lucide-icon"><use href="#lucide-alert-circle"></use></svg>
+              <svg *ngIf="status === 'risk'" class="lucide-icon"><use href="#lucide-alert-triangle"></use></svg>
+            </div>
+          </div>
+          
+          <div class="status-right">
+            <div class="status-badge-row">
+              <h2>{{ statusText }}</h2>
+              <span class="status-pill">{{ status === 'normal' ? 'NORMAL' : (status === 'warning' ? 'ALERTA' : 'RIESGO') }}</span>
+            </div>
+            <p class="reason-text">{{ statusReason || 'Analizando signos vitales en tiempo real...' }}</p>
 
-      <ion-button fill="clear" (click)="toggleLargeText({detail: {checked: !largeText}})">
-        <ion-icon slot="icon-only" [name]="largeText ? 'text-outline' : 'text-outline'" style="color: white; opacity: 0.7;"></ion-icon>
-      </ion-button>
-    </div>
-  </div>
-
-  <div class="ion-padding-horizontal ion-margin-bottom">
-    <button class="magic-button" (click)="activarEspejo()">
-      <div class="icon-box">
-        <ion-icon name="scan-outline"></ion-icon>
-      </div>
-      <div class="text-box">
-        <h3>Usar Espejo Ahora</h3>
-        <p>Sincronizar sesión</p>
-      </div>
-      <ion-icon name="chevron-forward-outline" class="arrow"></ion-icon>
-    </button>
-  </div>
-
-  <div class="ion-padding-horizontal">
-    <div class="glass-card status-card">
-      <div class="card-header">
-        <span class="card-title">Estado Actual</span>
-        <span class="status-badge" [ngClass]="status" *ngIf="!loading">{{ statusText }}</span>
-        <ion-skeleton-text animated style="width: 60px; height: 20px; border-radius: 10px;" *ngIf="loading"></ion-skeleton-text>
-      </div>
-      
-      <p class="status-reason" *ngIf="!loading">{{ statusReason }}</p>
-      <ion-skeleton-text animated style="width: 80%; height: 14px; margin-bottom: 20px;" *ngIf="loading"></ion-skeleton-text>
-
-      <div *ngIf="loading" class="ion-padding-top">
-        <div style="display: flex; gap: 10px;">
-          <ion-skeleton-text animated style="height: 60px; width: 33%; border-radius: 12px;"></ion-skeleton-text>
-          <ion-skeleton-text animated style="height: 60px; width: 33%; border-radius: 12px;"></ion-skeleton-text>
-          <ion-skeleton-text animated style="height: 60px; width: 33%; border-radius: 12px;"></ion-skeleton-text>
+            <div class="mini-pills-row">
+              <span class="mini-pill hr">
+                <svg class="lucide-icon filled" style="font-size: 12px;"><use href="#lucide-heart"></use></svg>
+                HR {{ reading?.hr || '--' }}
+              </span>
+              <span class="mini-pill spo2">
+                <svg class="lucide-icon filled" style="font-size: 12px;"><use href="#lucide-droplets"></use></svg>
+                SpO₂ {{ reading?.spo2 || '--' }}%
+              </span>
+              <span class="mini-pill hrv">
+                <svg class="lucide-icon" style="font-size: 12px;"><use href="#lucide-activity"></use></svg>
+                HRV {{ reading?.hrv || '--' }}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="stats-grid" *ngIf="!loading && reading">
-        <div class="stat-item">
-          <span class="label">HR</span>
-          <span class="value">{{ reading.hr ?? '--' }}</span>
-          <span class="unit">bpm</span>
-        </div>
-        <div class="stat-item">
-          <span class="label">SpO₂</span>
-          <span class="value">{{ reading.spo2 ?? '--' }}</span>
-          <span class="unit">%</span>
-        </div>
-        <div class="stat-item">
-          <span class="label">HRV</span>
-          <span class="value">{{ reading.hrv ?? '--' }}</span>
-          <span class="unit">ms</span>
-        </div>
-      </div>
-
-      <div *ngIf="!loading && !reading" class="no-data">
-        <p>No hay lecturas recientes para mostrar.</p>
-      </div>
-    </div>
-  </div>
-
-  <div class="ion-padding">
-    <div class="glass-card chart-card">
-      <div class="card-header">
-        <span class="card-title">Tendencias</span>
+      <div class="hud-card mirror-control">
+        <div class="hud-brackets"></div>
         
-        <div class="pill-selector">
-          <span [class.active]="range === '30'" (click)="onRangeChange('30')">30</span>
-          <span [class.active]="range === '100'" (click)="onRangeChange('100')">100</span>
-          <span [class.active]="range === '24h'" (click)="onRangeChange('24h')">24h</span>
+        <div class="control-header">
+          <div>
+            <h3>Control del Espejo</h3>
+            <p>Sincroniza tu sesión frente a la cámara</p>
+          </div>
+          <div class="secure-badge">
+            <svg class="lucide-icon" style="font-size: 14px;"><use href="#lucide-shield"></use></svg>
+            Secure Sync
+          </div>
+        </div>
+        
+        <button class="activate-btn" (click)="activarEspejo()" [disabled]="loading">
+          <div class="shimmer-effect"></div>
+          
+          <div class="btn-content">
+            <ion-spinner *ngIf="loading" name="crescent" style="color: var(--ion-color-base);"></ion-spinner>
+            <svg *ngIf="!loading" class="lucide-icon"><use href="#lucide-scan"></use></svg>
+            <span>{{ loading ? 'SINCRONIZANDO...' : 'USAR ESPEJO AHORA' }}</span>
+          </div>
+        </button>
+        
+        <p class="tip-text">💡 Tip: Mantén el rostro centrado • iluminación frontal</p>
+      </div>
+
+      <div class="vitals-grid">
+        
+        <div class="vital-card">
+          <div class="hud-brackets"></div>
+          <div class="vital-header">
+            <div class="icon-box gradient-hr">
+              <svg class="lucide-icon filled animate-beat"><use href="#lucide-heart"></use></svg>
+            </div>
+          </div>
+          <div class="vital-body">
+            <span class="value text-glow">{{ reading?.hr || '--' }}</span>
+            <span class="unit">bpm</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-bar gradient-hr" [style.width.%]="(reading?.hr || 0) / 2"></div>
+          </div>
+          <span class="vital-label">RITMO</span>
+        </div>
+
+        <div class="vital-card">
+          <div class="hud-brackets"></div>
+          <div class="vital-header">
+            <div class="icon-box gradient-spo2">
+              <svg class="lucide-icon filled"><use href="#lucide-droplets"></use></svg>
+            </div>
+          </div>
+          <div class="vital-body">
+            <span class="value text-glow">{{ reading?.spo2 || '--' }}</span>
+            <span class="unit">%</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-bar gradient-spo2" [style.width.%]="reading?.spo2 || 0"></div>
+          </div>
+          <span class="vital-label">OXÍGENO</span>
+        </div>
+
+        <div class="vital-card">
+          <div class="hud-brackets"></div>
+          <div class="vital-header">
+            <div class="icon-box gradient-hrv">
+               <svg class="lucide-icon"><use href="#lucide-activity"></use></svg>
+            </div>
+          </div>
+          <div class="vital-body">
+            <span class="value text-glow">{{ reading?.hrv || '--' }}</span>
+            <span class="unit">ms</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-bar gradient-hrv" [style.width.%]="(reading?.hrv || 0) / 1.5"></div>
+          </div>
+          <span class="vital-label">VFC</span>
+        </div>
+
+      </div>
+
+      <div class="alert-banner" (click)="goAlerts()">
+        <div class="bell-box">
+          <svg class="lucide-icon"><use href="#lucide-bell"></use></svg>
+        </div>
+        <div class="text">
+          <strong>Tienes {{ unreadAlerts }} alertas</strong>
+          <span>Toca para revisar</span>
+        </div>
+        <svg class="lucide-icon" style="opacity: 0.5;"><use href="#lucide-chevron-right"></use></svg>
+      </div>
+
+      <div class="hud-card chart-section">
+        <div class="hud-brackets"></div>
+        <div class="chart-header">
+          <div>
+            <h3>Tendencia</h3>
+            <p class="subtitle-chart">
+              {{ range === '30' ? 'Últimas 30 lecturas' : 
+                 range === '100' ? 'Últimas 100 lecturas' : 
+                 range === '24h' ? 'Últimas 24 horas' : 'Últimos 7 días' }}
+            </p>
+          </div>
+          
+          <div class="chart-pills">
+            <span [class.active]="range === '30'" (click)="onRangeChange('30')">30</span>
+            <span [class.active]="range === '100'" (click)="onRangeChange('100')">100</span>
+            <span [class.active]="range === '24h'" (click)="onRangeChange('24h')">24h</span>
+            <span [class.active]="range === '7d'" (click)="onRangeChange('7d')">7d</span>
+          </div>
+        </div>
+        
+        <div class="chart-wrapper">
+          <ion-skeleton-text *ngIf="loadingCombined" animated style="height: 100%; border-radius: 12px; opacity: 0.1;"></ion-skeleton-text>
+          <canvas *ngIf="!loadingCombined"
+            baseChart
+            [type]="'line'"
+            [data]="combinedChartData"
+            [plugins]="combinedPlugins"
+            [options]="combinedOptions">
+          </canvas>
+        </div>
+
+        <div class="chart-legend">
+          <div class="legend-item">
+            <span class="dot hr"></span> HR
+          </div>
+          <div class="legend-item">
+            <span class="dot spo2"></span> SpO2
+          </div>
+          <div class="legend-item">
+            <span class="dot hrv"></span> HRV
+          </div>
+        </div>
+        <p class="chart-footer-note">Líneas punteadas = umbrales warning/risk</p>
+      </div>
+
+      <div class="report-section">
+        <h4 class="section-title">REPORTES</h4>
+        
+        <div class="actions-grid">
+          <button class="action-btn outline" (click)="exportPDF()">
+            <svg class="lucide-icon"><use href="#lucide-file-text"></use></svg> Local PDF
+          </button>
+          
+          <button class="action-btn filled" (click)="exportPDFBackend()">
+             <svg class="lucide-icon"><use href="#lucide-share2"></use></svg> Compartir
+          </button>
         </div>
       </div>
 
-      <div class="chart-container">
-        <ion-skeleton-text *ngIf="loadingCombined" animated style="height: 200px; width: 100%; opacity: 0.1; border-radius: 12px;"></ion-skeleton-text>
-        
-        <canvas *ngIf="!loadingCombined"
-          baseChart
-          [type]="'line'"
-          [data]="combinedChartData"
-          [plugins]="combinedPlugins"
-          [options]="combinedOptions">
-        </canvas>
-      </div>
-    </div>
+    </div> 
+    <div style="height: 60px;"></div>
   </div>
 
-  <div class="ion-padding-horizontal ion-padding-bottom">
-    <div class="actions-grid">
-      <div class="glass-btn small" (click)="goAlerts()">
-        <ion-icon name="notifications-outline" [color]="unreadAlerts > 0 ? 'warning' : 'medium'"></ion-icon>
-        <span>{{ unreadAlerts }} Alertas</span>
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed" class="hud-fab">
+    <ion-fab-button (click)="activarEspejo()">
+      <div class="scan-rotate">
+        <svg class="lucide-icon" style="font-size: 24px;"><use href="#lucide-scan"></use></svg>
       </div>
-
-      <div class="glass-btn small" (click)="exportPDF()">
-        <ion-icon name="document-text-outline"></ion-icon>
-        <span>Reporte PDF</span>
-      </div>
-    </div>
-  </div>
-
-  <div style="height: 40px;"></div>
+    </ion-fab-button>
+  </ion-fab>
 
 </ion-content>

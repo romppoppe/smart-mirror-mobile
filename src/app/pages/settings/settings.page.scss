@@ -210,3 +210,12 @@ ion-modal.glass-modal {
 .hint-text {
   text-align: center; color: rgba(255,255,255,0.2); font-size: 12px; margin-top: 20px;
 }
+/* ✅ Blindaje por overlays globales */
+ion-content.bg-gradient {
+  position: relative;
+}
+
+ion-content.bg-gradient > .ion-padding {
+  position: relative;
+  z-index: 10;
+}

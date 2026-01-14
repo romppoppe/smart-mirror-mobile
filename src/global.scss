@@ -1,82 +1,223 @@
-/*
- * App Global CSS
- * ----------------------------------------------------------------------------
- * Put style rules here that you want to apply globally. These styles are for
- * the entire app and not just one component. Additionally, this file can be
- * used as an entry point to import other CSS/Sass files to be included in the
- * output CSS.
- * For more information on global stylesheets, visit the documentation:
- * https://ionicframework.com/docs/layout/global-stylesheets
- */
-
-/* Core CSS required for Ionic components to work properly */
+/* ✅ Ionic base (OBLIGATORIO) */
 @import "@ionic/angular/css/core.css";
-
-/* Basic CSS for apps built with Ionic */
 @import "@ionic/angular/css/normalize.css";
 @import "@ionic/angular/css/structure.css";
 @import "@ionic/angular/css/typography.css";
-@import "@ionic/angular/css/display.css";
 
-/* Optional CSS utils that can be commented out */
+/* ✅ Utilities (recomendado) */
 @import "@ionic/angular/css/padding.css";
 @import "@ionic/angular/css/float-elements.css";
 @import "@ionic/angular/css/text-alignment.css";
 @import "@ionic/angular/css/text-transformation.css";
 @import "@ionic/angular/css/flex-utils.css";
+@import "@ionic/angular/css/display.css";
 
-/**
- * Ionic Dark Mode
- * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
- */
+/* 👇 Ya aquí tu HUD/theme */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@...&family=Inter:wght@...');
 
-/* @import "@ionic/angular/css/palettes/dark.always.css"; */
-/* @import "@ionic/angular/css/palettes/dark.class.css"; */
-@import "@ionic/angular/css/palettes/dark.system.css";
+/* 2. DEFINICIÓN DE VARIABLES (Sistema de Color Lovable) */
+:root {
+  /* Core Colors (HSL Values) */
+  --bg-hsl: 222, 47%, 5%;
+  --fg-hsl: 195, 100%, 95%;
+  
+  --primary-hsl: 185, 100%, 50%;      /* Cian Neón */
+  --secondary-hsl: 220, 60%, 12%;     /* Azul Oscuro Vidrio */
+  --card-hsl: 220, 40%, 8%;           /* Fondo de Tarjetas */
+  
+  /* Status Colors */
+  --health-normal: 145, 80%, 45%;     /* Verde Matrix */
+  --health-warning: 35, 100%, 55%;    /* Ambar */
+  --health-risk: 0, 85%, 55%;         /* Rojo Alerta */
 
-/* ===== MODO ACCESIBILIDAD - TEXTO GRANDE ===== */
+  /* Vital Colors */
+  --vital-hr: 350, 85%, 60%;          /* Rosa/Rojo */
+  --vital-spo2: 200, 100%, 55%;       /* Azul Oxígeno */
+  --vital-hrv: 280, 80%, 60%;         /* Violeta */
 
-body.large-text {
-  font-size: 18px;
+  /* IONIC OVERRIDES (Para que los componentes nativos se adapten) */
+  --ion-background-color: hsl(var(--bg-hsl));
+  --ion-text-color: hsl(var(--fg-hsl));
+  --ion-color-primary: hsl(var(--primary-hsl));
+  
+  /* Fonts */
+  --ion-font-family: 'Inter', system-ui, sans-serif;
+  --font-hud: 'Orbitron', monospace;
 }
 
-body.large-text ion-title {
-  font-size: 20px;
+/* 3. ESTILOS GLOBALES BASE */
+html, body {
+  font-family: var(--ion-font-family);
+  background: hsl(var(--bg-hsl));
+  color: hsl(var(--fg-hsl));
 }
 
-body.large-text ion-card-title {
-  font-size: 20px;
+/* Eliminar bordes por defecto en Ionic */
+.ion-page {
+  background: hsl(var(--bg-hsl)) !important;
 }
 
-body.large-text ion-card-subtitle,
-body.large-text ion-label,
-body.large-text p,
-body.large-text ion-text {
-  font-size: 18px;
+/* 4. CLASES DE UTILIDAD (Traducidas de Tailwind a SCSS) */
+
+/* Tipografía HUD */
+.font-display { font-family: var(--font-hud); }
+.font-mono-hud { font-family: var(--font-hud); letter-spacing: 0.05em; }
+
+/* Efecto Cristal (Glassmorphism) */
+.glass {
+  background: hsla(220, 60%, 8%, 0.6);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid hsla(195, 100%, 50%, 0.15);
 }
 
-body.large-text ion-button {
-  height: 56px;
-  font-size: 18px;
+.glass-card {
+  background: linear-gradient(
+    135deg,
+    hsla(220, 60%, 10%, 0.7),
+    hsla(220, 40%, 6%, 0.9)
+  );
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  border: 1px solid hsla(185, 100%, 50%, 0.1);
+  box-shadow: 
+    0 0 40px -10px hsla(185, 100%, 50%, 0.1),
+    inset 0 1px 0 hsla(195, 100%, 90%, 0.05);
+  border-radius: 16px;
 }
 
-body.large-text ion-segment-button ion-label {
-  font-size: 18px;
-  font-weight: 700;
+/* Efectos de Brillo (Glow) */
+.glow-primary {
+  box-shadow: 
+    0 0 20px hsla(var(--primary-hsl), 0.3),
+    0 0 40px hsla(var(--primary-hsl), 0.1);
 }
 
-body.high-contrast {
-  --ion-background-color: #000 !important;
-  --ion-text-color: #fff !important;
+.text-glow {
+  text-shadow: 0 0 20px hsla(var(--primary-hsl), 0.5);
 }
 
-body.high-contrast ion-card {
-  border: 1px solid #fff;
+/* Borde Neón */
+.neon-border {
+  position: relative;
+  border: 1px solid transparent;
+  border-radius: inherit;
+  background-image: linear-gradient(hsl(var(--bg-hsl)), hsl(var(--bg-hsl))), 
+                    linear-gradient(135deg, hsla(185, 100%, 50%, 0.5), hsla(185, 100%, 50%, 0.1));
+  background-origin: border-box;
+  background-clip: content-box, border-box;
 }
 
-body.high-contrast ion-item {
-  --background: #000;
+/* 5. ANIMACIONES (Keyframes) */
+
+/* Líneas de escaneo (Efecto TV futurista) */
+.hud-scanlines {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    hsla(185, 100%, 50%, 0.03) 2px,
+    hsla(185, 100%, 50%, 0.03) 4px
+  );
+  z-index: 0;
+  opacity: 0.5;
 }
 
+/* Latido del corazón */
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  15% { transform: scale(1.15); }
+  30% { transform: scale(1); }
+  45% { transform: scale(1.1); }
+  60% { transform: scale(1); }
+}
+.animate-heartbeat { animation: heartbeat 1.5s ease-in-out infinite; }
+
+/* Indicador LIVE pulsante */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px hsl(var(--health-normal)); }
+  50% { opacity: 0.6; box-shadow: 0 0 20px hsl(var(--health-normal)), 0 0 40px hsla(var(--health-normal), 0.5); }
+}
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+/* Entrada flotante */
+@keyframes value-update {
+  0% { opacity: 0.5; transform: translateY(-4px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.animate-value-update { animation: value-update 0.3s ease-out; }
+
+/* Shimmer (Brillo que pasa) */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsla(var(--primary-hsl), 0.3) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s linear infinite;
+}
+/* ... (Mantén lo que ya tenías de fuentes y variables root) ... */
+
+/* 🎨 GRADIENTES DE VITALES (Extraídos de Lovable) */
+.gradient-hr {
+  background: linear-gradient(135deg, #f43f5e 0%, #db2777 100%); /* Rose-500 to Pink-600 */
+  box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3);
+}
+
+.gradient-spo2 {
+  background: linear-gradient(135deg, #22d3ee 0%, #3b82f6 100%); /* Cyan-400 to Blue-500 */
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.gradient-hrv {
+  background: linear-gradient(135deg, #8b5cf6 0%, #9333ea 100%); /* Violet-500 to Purple-600 */
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+/* 📐 HUD CORNER BRACKETS (Esquinas decorativas) */
+.hud-brackets {
+  position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  opacity: 0.5;
+}
+.hud-brackets::before, .hud-brackets::after {
+  content: ''; position: absolute; width: 12px; height: 12px;
+  border: 2px solid rgba(6, 182, 212, 0.3); /* Primary color low opacity */
+  transition: all 0.3s;
+}
+.hud-brackets::before { top: 0; left: 0; border-right: 0; border-bottom: 0; border-top-left-radius: 4px; }
+.hud-brackets::after { bottom: 0; right: 0; border-left: 0; border-top: 0; border-bottom-right-radius: 4px; }
+
+/* ANIMACIÓN DE SHIMMER (Brillo que pasa) */
+@keyframes shimmer-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+/* ... (tu código anterior) ... */
+
+/* ESTILOS PARA ÍCONOS LUCIDE (SVG) */
+.lucide-icon {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  vertical-align: middle;
+  stroke-width: 2; /* Grosor de línea estilo Lovable */
+  stroke: currentColor; /* Hereda el color del texto */
+  fill: none; /* Por defecto no tienen relleno */
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  
+  /* Para íconos que deben tener relleno sólido (como los de las tarjetas vitales) */
+  &.filled {
+    fill: currentColor;
+    stroke: none;
+  }
+}

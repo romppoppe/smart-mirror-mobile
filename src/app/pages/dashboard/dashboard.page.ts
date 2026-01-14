@@ -40,12 +40,8 @@ export class DashboardPage implements OnInit, OnDestroy {
 
   // Usuario actual
   currentUserUid: string | null = null;
-
-  // ✅ Perfil del usuario (FUENTE: Firestore en tiempo real)
   userDisplayName = 'Usuario';
   userEmail = '';
-
-  // Perfil / dispositivo vinculado
   linkedDeviceId: string = '—';
 
   // Datos
@@ -65,107 +61,113 @@ export class DashboardPage implements OnInit, OnDestroy {
   range: RangeKey = '30';
   loadingCombined = true;
 
-  // Configuración de Gráfica
+  // ---------------------------------------------------------
+  // 🎨 CONFIGURACIÓN DE GRÁFICA PIXEL PERFECT (LOVABLE STYLE)
+  // ---------------------------------------------------------
+  
+  // Datos iniciales vacíos
   combinedChartData: ChartConfiguration<'line'>['data'] = {
     labels: [],
-    datasets: [
-      { data: [], label: 'HR (bpm)', tension: 0.35, pointRadius: 3, yAxisID: 'yHR' },
-      { data: [], label: 'SpO₂ (%)', tension: 0.35, pointRadius: 3, yAxisID: 'ySpO2' },
-      { data: [], label: 'HRV (ms)', tension: 0.35, pointRadius: 3, yAxisID: 'yHRV' },
-    ],
+    datasets: [],
   };
 
+  // Opciones visuales limpias (Sin grids, curvas suaves, sin puntos)
+  combinedOptions: ChartOptions<'line'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: {
+      duration: 1000,
+      easing: 'easeOutQuart'
+    },
+    elements: {
+      line: {
+        tension: 0.4, // ✅ Curvas suaves (Spline) - Clave para el look Lovable
+        borderWidth: 2
+      },
+      point: {
+        radius: 0,    // ✅ Ocultar puntos para limpieza visual (se ven al pasar el mouse)
+        hitRadius: 20,
+        hoverRadius: 6
+      }
+    },
+    scales: {
+      x: {
+        // ✅ CORRECCIÓN ERROR ROJO: En Chart.js v4 se usa 'border' en lugar de 'drawBorder'
+        border: { display: false }, 
+        grid: { display: false }, 
+        ticks: {
+          color: 'rgba(255, 255, 255, 0.4)',
+          font: { size: 10, family: "'Inter', sans-serif" },
+          maxRotation: 0,
+          autoSkip: true,
+          maxTicksLimit: 6
+        }
+      },
+      // Ejes Y ocultos (Clean HUD Look)
+      yHR: {
+        type: 'linear', display: false, min: 40, max: 140
+      },
+      ySpO2: {
+        type: 'linear', display: false, min: 85, max: 100
+      },
+      yHRV: {
+        type: 'linear', display: false, min: 0, max: 120
+      }
+    },
+    plugins: {
+      legend: { display: false }, // Usamos nuestra propia leyenda HTML
+      tooltip: {
+        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+        titleColor: '#ffffff',
+        bodyColor: '#cbd5e1',
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+        borderWidth: 1,
+        cornerRadius: 12,
+        padding: 12,
+        usePointStyle: true,
+        mode: 'index',
+        intersect: false
+      }
+    }
+  };
+
+  // Umbrales (Thresholds)
   private readonly THRESHOLDS = {
     hr: { warningHigh: 100, riskHigh: 120, warningLow: 50, riskLow: 40 },
     spo2: { warningLow: 94, riskLow: 90 },
     hrv: { warningLow: 20, riskLow: 10 },
   };
 
-  // --- COLORES GRÁFICA ---
-  private hrColor(v: number | null): string {
-    if (v == null) return '#9ca3af';
-    if (v >= this.THRESHOLDS.hr.riskHigh || v <= this.THRESHOLDS.hr.riskLow) return '#dc2626';
-    if (v >= this.THRESHOLDS.hr.warningHigh || v <= this.THRESHOLDS.hr.warningLow) return '#f59e0b';
-    return '#16a34a';
-  }
-  private spo2Color(v: number | null): string {
-    if (v == null) return '#9ca3af';
-    if (v <= this.THRESHOLDS.spo2.riskLow) return '#dc2626';
-    if (v <= this.THRESHOLDS.spo2.warningLow) return '#f59e0b';
-    return '#16a34a';
-  }
-  private hrvColor(v: number | null): string {
-    if (v == null) return '#9ca3af';
-    if (v <= this.THRESHOLDS.hrv.riskLow) return '#dc2626';
-    if (v <= this.THRESHOLDS.hrv.warningLow) return '#f59e0b';
-    return '#16a34a';
-  }
-
-  // --- PLUGIN UMBRALES ---
+  // Plugin para dibujar líneas de umbral sutiles (Warning/Risk)
   private thresholdPlugin: Plugin<'line'> = {
     id: 'thresholdLines',
     afterDraw: (chart) => {
       const ctx = chart.ctx;
-      if (!ctx) return;
+      const yAxis = chart.scales['yHR'];
+      if (!ctx || !yAxis) return;
 
-      const drawHLine = (axisId: string, value: number, label: string) => {
-        const scale = (chart.scales as any)?.[axisId];
-        if (!scale) return;
-
-        const y = scale.getPixelForValue(value);
-        const left = chart.chartArea.left;
-        const right = chart.chartArea.right;
-
+      const drawLine = (value: number, color: string) => {
+        const y = yAxis.getPixelForValue(value);
+        if (y < chart.chartArea.top || y > chart.chartArea.bottom) return;
+        
         ctx.save();
-        ctx.setLineDash([6, 4]);
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = '#6b7280';
         ctx.beginPath();
-        ctx.moveTo(left, y);
-        ctx.lineTo(right, y);
+        ctx.moveTo(chart.chartArea.left, y);
+        ctx.lineTo(chart.chartArea.right, y);
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = color;
+        ctx.setLineDash([4, 4]); // Línea punteada
         ctx.stroke();
-
-        const text = `${label}: ${value}`;
-        ctx.setLineDash([]);
-        ctx.font = '12px sans-serif';
-        const padding = 4;
-        const textW = ctx.measureText(text).width;
-        const boxX = right - textW - 10;
-        const boxY = y - 14;
-
-        ctx.fillStyle = 'rgba(255,255,255,0.85)';
-        ctx.fillRect(boxX - padding, boxY, textW + padding * 2, 16);
-        ctx.fillStyle = '#111827';
-        ctx.fillText(text, boxX, boxY + 12);
         ctx.restore();
       };
 
-      drawHLine('yHR', this.THRESHOLDS.hr.warningHigh, 'HR warn');
-      drawHLine('yHR', this.THRESHOLDS.hr.riskHigh, 'HR risk');
-      drawHLine('yHR', this.THRESHOLDS.hr.warningLow, 'HR warn');
-      drawHLine('yHR', this.THRESHOLDS.hr.riskLow, 'HR risk');
-      drawHLine('ySpO2', this.THRESHOLDS.spo2.warningLow, 'SpO₂ warn');
-      drawHLine('ySpO2', this.THRESHOLDS.spo2.riskLow, 'SpO₂ risk');
+      // Líneas de referencia sutiles para HR (Warning/Risk)
+      drawLine(100, 'rgba(234, 179, 8, 0.3)'); // Warning Yellow
+      drawLine(120, 'rgba(239, 68, 68, 0.3)'); // Risk Red
     },
   };
 
   combinedPlugins: Plugin<'line'>[] = [this.thresholdPlugin];
-
-  combinedOptions: ChartOptions<'line'> = {
-    responsive: true,
-    maintainAspectRatio: false,
-    animation: false,
-    plugins: {
-      legend: { labels: { font: { size: 16 }, boxWidth: 16 } },
-      tooltip: { enabled: true },
-    },
-    scales: {
-      x: { ticks: { font: { size: 14 }, autoSkip: true, maxRotation: 0 } },
-      yHR: { type: 'linear', position: 'left', ticks: { font: { size: 14 } }, title: { display: true, text: 'HR (bpm)' } },
-      ySpO2: { type: 'linear', position: 'right', ticks: { font: { size: 14 } }, title: { display: true, text: 'SpO₂ (%)' }, grid: { drawOnChartArea: false }, min: 80, max: 100 },
-      yHRV: { type: 'linear', position: 'right', ticks: { font: { size: 14 } }, title: { display: true, text: 'HRV (ms)' }, grid: { drawOnChartArea: false }, min: 0, max: 150 },
-    },
-  };
 
   constructor(
     private health: HealthService,
@@ -180,15 +182,9 @@ export class DashboardPage implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.largeText = this.accessibility.isEnabled();
-
-    // ✅ detectar cambios de usuario confiable
     this.authSub = this.auth.user$.subscribe(async (user) => {
       const newUid = user?.uid ?? null;
-
       if (newUid === this.currentUserUid) return;
-
-      console.log('[Dashboard] Auth user changed:', newUid);
-
       this.currentUserUid = newUid;
       await this.handleUserChange();
     });
@@ -199,98 +195,61 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.authSub?.unsubscribe();
   }
 
-  /** Limpia TODA suscripción activa (incluye perfil) */
   private cleanupSubscriptions() {
     this.sub.unsubscribe();
     this.sub = new Subscription();
-
     this.rangeSub?.unsubscribe();
     this.rangeSub = undefined;
-
     this.profileSub?.unsubscribe();
     this.profileSub = undefined;
   }
 
-  /** Limpia UI y deja dashboard listo para el siguiente usuario */
   private resetStateVisual() {
     this.linkedDeviceId = '—';
     this.reading = null;
     this.alerts = [];
     this.unreadAlerts = 0;
     this.currentRangeReadings = [];
-
-    // ✅ perfil visible
     this.userDisplayName = 'Usuario';
     this.userEmail = '';
-
-    // ✅ reset chart
-    this.combinedChartData = {
-      ...this.combinedChartData,
-      labels: [],
-      datasets: [
-        { ...this.combinedChartData.datasets[0], data: [] },
-        { ...this.combinedChartData.datasets[1], data: [] },
-        { ...this.combinedChartData.datasets[2], data: [] },
-      ],
-    };
+    
+    // Reset Data
+    this.combinedChartData = { labels: [], datasets: [] };
 
     this.loading = true;
     this.loadingAlerts = true;
     this.loadingCombined = true;
-
     this.status = 'normal';
     this.statusText = 'CARGANDO';
     this.statusReason = '';
   }
 
-  /** Se ejecuta cuando cambia el usuario (login/logout/cambio real) */
   private async handleUserChange() {
     this.cleanupSubscriptions();
     this.resetStateVisual();
 
-    // 1) si no hay usuario, enviar a login
     if (!this.currentUserUid) {
-      console.warn('[Dashboard] No user session, redirecting...');
-      await this.router.navigateByUrl('/home', { replaceUrl: true });
+      await this.router.navigateByUrl('/login', { replaceUrl: true });
       return;
     }
 
-    // 2) ✅ PERFIL EN TIEMPO REAL (aquí está la clave para que Dashboard cambie al editar Settings)
     this.subscribeUserProfile(this.currentUserUid);
-
-    // 3) iniciar streams del usuario actual (lecturas/alertas/gráficas)
     this.iniciarSuscripciones();
   }
 
-  /** ✅ Mantiene nombre/email/linkedDeviceId SIEMPRE sincronizados con Firestore */
   private subscribeUserProfile(uid: string) {
     this.profileSub?.unsubscribe();
-
     this.profileSub = this.firestore.userProfile$(uid).subscribe({
       next: (profile) => {
-        // Nombre y correo (Firestore first, luego Auth fallback)
-        this.userDisplayName =
-          profile?.displayName?.trim() ||
-          this.auth.currentUser?.displayName ||
-          'Usuario';
-
-        this.userEmail =
-          profile?.email?.trim() ||
-          this.auth.currentUser?.email ||
-          '';
-
-        // Dispositivo vinculado
+        this.userDisplayName = profile?.displayName?.trim() || this.auth.currentUser?.displayName || 'Usuario';
+        this.userEmail = profile?.email?.trim() || this.auth.currentUser?.email || '';
         this.linkedDeviceId = profile?.linkedDeviceId?.trim() || 'Sin vincular';
       },
-      error: (e) => {
-        console.warn('[Dashboard] userProfile$ error', e);
-        // Fallbacks
+      error: () => {
         this.userDisplayName = this.auth.currentUser?.displayName || 'Usuario';
-        this.userEmail = this.auth.currentUser?.email || '';
         this.linkedDeviceId = 'Sin vincular';
       },
     });
-
     this.sub.add(this.profileSub);
   }
 
@@ -305,10 +264,7 @@ export class DashboardPage implements OnInit, OnDestroy {
           this.applyStatusFromReading(r);
           this.loading = false;
         },
-        error: (e) => {
-          console.error('[dashboard] latestReading$ error', e);
-          this.loading = false;
-        },
+        error: () => { this.loading = false; },
       })
     );
 
@@ -320,10 +276,7 @@ export class DashboardPage implements OnInit, OnDestroy {
           this.unreadAlerts = rows.filter((a) => a.handled !== true).length;
           this.loadingAlerts = false;
         },
-        error: (e) => {
-          console.error('[dashboard] latestAlerts$ error', e);
-          this.loadingAlerts = false;
-        },
+        error: () => { this.loadingAlerts = false; },
       })
     );
 
@@ -341,12 +294,7 @@ export class DashboardPage implements OnInit, OnDestroy {
       this.mostrarToast('⚠️ No hay usuario logueado', 'danger');
       return;
     }
-
-    // ✅ nombre correcto (Firestore first, luego auth)
-    const nameToSend =
-      this.userDisplayName?.trim() ||
-      user.displayName ||
-      'Usuario';
+    const nameToSend = this.userDisplayName?.trim() || user.displayName || 'Usuario';
 
     try {
       const sessionRef = doc(this.db, 'system', 'mirror_access');
@@ -355,10 +303,8 @@ export class DashboardPage implements OnInit, OnDestroy {
         timestamp: new Date(),
         user_name: nameToSend,
       });
-
       this.mostrarToast('🚀 ¡Espejo Activado! Ponte frente a él.', 'success');
     } catch (error) {
-      console.error('Error en sync:', error);
       this.mostrarToast('❌ Error de conexión', 'danger');
     }
   }
@@ -378,6 +324,7 @@ export class DashboardPage implements OnInit, OnDestroy {
     if (!canvas || !chart) return;
 
     try {
+      // Ajuste temporal para la captura: mostramos puntos pequeños
       (chart.options as any).elements = { point: { radius: 2 } };
       chart.update();
     } catch {}
@@ -401,6 +348,11 @@ export class DashboardPage implements OnInit, OnDestroy {
         alerts: this.alerts,
         chartCanvas: canvas,
       });
+      
+      // Restaurar estilo clean (sin puntos)
+      (chart.options as any).elements = { point: { radius: 0 } };
+      chart.update();
+
     } catch (e) {
       console.error(e);
     }
@@ -409,14 +361,12 @@ export class DashboardPage implements OnInit, OnDestroy {
   async exportPDFBackend() {
     const user = this.auth.currentUser;
     if (!user) return;
-
     try {
       this.mostrarToast('📄 Generando reporte en la nube...', 'primary');
       const { from, to } = this.getBackendRangeMs();
       const res: any = await this.report.generateMedicalReportFromBackend({ from, to });
       await this.report.saveAndShareBase64Pdf(res.fileName, res.base64);
     } catch (e) {
-      console.error(e);
       this.mostrarToast('Error al generar PDF', 'danger');
     }
   }
@@ -439,6 +389,9 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.subscribeCombinedRange();
   }
 
+  // ---------------------------------------------------------
+  // 📈 LÓGICA DE DATOS DE LA GRÁFICA (AREA CHARTS)
+  // ---------------------------------------------------------
   private subscribeCombinedRange() {
     this.loadingCombined = true;
     this.rangeSub?.unsubscribe();
@@ -454,29 +407,40 @@ export class DashboardPage implements OnInit, OnDestroy {
         this.currentRangeReadings = rows ?? [];
         const { labels, hr, spo2, hrv } = this.normalizeReadings(this.currentRangeReadings);
 
+        // ✅ ASIGNACIÓN DE COLORES TEMÁTICOS Y RELLENO (AREA CHART)
+        // Usamos fill: 'origin' y colores con transparencia para lograr el efecto "Lovable"
         this.combinedChartData = {
           labels,
           datasets: [
             {
-              ...this.combinedChartData.datasets[0],
               data: hr,
+              label: 'HR (bpm)',
+              borderColor: '#f43f5e',           // Rose-500
+              backgroundColor: 'rgba(244, 63, 94, 0.15)', // Relleno Transparente
+              fill: 'origin',                   // ✅ EFECTO AREA
               yAxisID: 'yHR',
-              segment: { borderColor: (ctx) => this.hrColor(ctx.p0.parsed?.y) },
-              pointBackgroundColor: hr.map((v) => this.hrColor(v)),
+              tension: 0.4,
+              pointRadius: 0
             },
             {
-              ...this.combinedChartData.datasets[1],
               data: spo2,
+              label: 'SpO₂ (%)',
+              borderColor: '#06b6d4',           // Cyan-500
+              backgroundColor: 'rgba(6, 182, 212, 0.15)',
+              fill: 'origin',                   // ✅ EFECTO AREA
               yAxisID: 'ySpO2',
-              segment: { borderColor: (ctx) => this.spo2Color(ctx.p0.parsed?.y) },
-              pointBackgroundColor: spo2.map((v) => this.spo2Color(v)),
+              tension: 0.4,
+              pointRadius: 0
             },
             {
-              ...this.combinedChartData.datasets[2],
               data: hrv,
+              label: 'HRV (ms)',
+              borderColor: '#8b5cf6',           // Violet-500
+              backgroundColor: 'rgba(139, 92, 246, 0.15)',
+              fill: 'origin',                   // ✅ EFECTO AREA
               yAxisID: 'yHRV',
-              segment: { borderColor: (ctx) => this.hrvColor(ctx.p0.parsed?.y) },
-              pointBackgroundColor: hrv.map((v) => this.hrvColor(v)),
+              tension: 0.4,
+              pointRadius: 0
             },
           ],
         };
@@ -493,7 +457,6 @@ export class DashboardPage implements OnInit, OnDestroy {
   }
 
   private normalizeReadings(readings: VitalReading[]) {
-    // ✅ si existe deviceTs, úsalo (es tu campo real estable)
     const sorted = [...(readings ?? [])].sort((a, b) => {
       const ams = this.toMillis(a);
       const bms = this.toMillis(b);
@@ -516,19 +479,15 @@ export class DashboardPage implements OnInit, OnDestroy {
   }
 
   private toMillis(rOrTs: any): number {
-    // ✅ Si recibimos un VitalReading, preferimos deviceTs
     if (rOrTs && typeof rOrTs === 'object' && (rOrTs.deviceTs || rOrTs.ts)) {
       const deviceTs = Number(rOrTs.deviceTs);
       if (Number.isFinite(deviceTs) && deviceTs > 0) return deviceTs * 1000;
-
       const ts = rOrTs.ts;
       if (ts && typeof ts.toMillis === 'function') return ts.toMillis();
       const d = new Date(ts);
       const ms = d.getTime();
       return isNaN(ms) ? Date.now() : ms;
     }
-
-    // ✅ Si recibimos solo ts
     const ts = rOrTs;
     if (!ts) return Date.now();
     if (typeof ts.toMillis === 'function') return ts.toMillis();
@@ -545,7 +504,6 @@ export class DashboardPage implements OnInit, OnDestroy {
   private computeStatusLocal(r: VitalReading): VitalStatus {
     const hr = typeof r.hr === 'number' ? r.hr : null;
     const spo2 = typeof r.spo2 === 'number' ? r.spo2 : null;
-
     if (hr != null && (hr >= this.THRESHOLDS.hr.riskHigh || hr <= this.THRESHOLDS.hr.riskLow)) return 'risk';
     if (spo2 != null && spo2 <= this.THRESHOLDS.spo2.riskLow) return 'risk';
     if (hr != null && (hr >= this.THRESHOLDS.hr.warningHigh || hr <= this.THRESHOLDS.hr.warningLow)) return 'warning';
@@ -563,19 +521,24 @@ export class DashboardPage implements OnInit, OnDestroy {
 
     const s = r.status ?? this.computeStatusLocal(r);
     this.status = s;
-    this.statusText = s.toUpperCase();
 
-    if (r.reasons?.length) { this.statusReason = r.reasons.join(' • '); return; }
-    if (s === 'risk') this.statusReason = 'Valores críticos detectados.';
-    else if (s === 'warning') this.statusReason = 'Valores fuera de rango.';
-    else this.statusReason = 'Lectura dentro de parámetros normales.';
-  }
+    // ✅ CORRECCIÓN: Títulos amigables estilo Lovable
+    const titles: Record<string, string> = {
+      normal: 'Todo en Orden',
+      warning: 'Precaución',
+      risk: 'Atención Requerida'
+    };
+    this.statusText = titles[s] || 'Desconocido';
 
-  statusColor(): string {
-    if (this.status === 'risk') return 'danger';
-    if (this.status === 'warning') return 'warning';
-    if (this.statusText === 'SIN DATOS') return 'medium';
-    return 'success';
+    if (r.reasons?.length) { 
+      this.statusReason = r.reasons.join(' • '); 
+      return; 
+    }
+    
+    // Mensajes amigables
+    if (s === 'risk') this.statusReason = 'Tus signos vitales requieren atención inmediata.';
+    else if (s === 'warning') this.statusReason = 'Algunos valores están fuera del rango ideal.';
+    else this.statusReason = 'Tus signos vitales están dentro de rangos saludables.';
   }
 
   private rangeLabel(): string {
@@ -589,7 +552,6 @@ export class DashboardPage implements OnInit, OnDestroy {
     const to = Date.now();
     if (this.range === '24h') return { from: to - 24 * 60 * 60 * 1000, to };
     if (this.range === '7d') return { from: to - 7 * 24 * 60 * 60 * 1000, to };
-
     const rows = this.currentRangeReadings ?? [];
     if (rows.length >= 2) {
       const sorted = [...rows].sort((a, b) => this.toMillis(a) - this.toMillis(b));

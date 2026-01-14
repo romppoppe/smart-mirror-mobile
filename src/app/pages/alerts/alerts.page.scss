@@ -1,15 +1,164 @@
-ion-title {
-  font-size: 18px;
+// ---------------- LAYOUT & BACKGROUND ----------------
+ion-content.bg-hud {
+  --background: hsl(var(--bg-hsl));
 }
 
-ion-card {
-  border-radius: 16px;
+.hud-glow {
+  position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; height: 350px;
+  background: radial-gradient(ellipse at top, hsla(var(--primary-hsl), 0.15), transparent 70%);
+  pointer-events: none; z-index: 0;
 }
 
-ion-card-content {
-  font-size: 16px;
+.main-container {
+  position: relative; z-index: 10; max-width: 600px; margin: 0 auto; padding: 0 16px;
 }
 
-ion-chip ion-label {
-  font-size: 14px;
+// ---------------- HEADER ----------------
+.hud-header {
+  padding: 20px 0 10px;
+  
+  .brand-group {
+    display: flex; align-items: center; gap: 12px;
+    .logo-box {
+      width: 40px; height: 40px; background: rgba(255,255,255,0.05); border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid rgba(255,255,255,0.1); cursor: pointer;
+      .lucide-icon { color: white; width: 20px; height: 20px; }
+    }
+    .titles {
+      h1 { font-family: var(--font-hud); font-size: 18px; margin: 0; font-weight: 700; color: white; }
+      .device-badge { font-size: 12px; color: #94a3b8; }
+    }
+  }
+}
+
+// ---------------- FILTRO (SEGMENT) ----------------
+.filter-container {
+  margin-bottom: 20px;
+  .custom-segment {
+    background: rgba(0,0,0,0.3); padding: 4px; border-radius: 14px; display: flex; gap: 4px;
+    .segment-btn {
+      flex: 1; padding: 10px; border-radius: 10px; background: transparent; border: none;
+      color: #64748b; font-weight: 600; font-size: 13px; transition: all 0.2s;
+      &.active {
+        background: hsl(var(--card-hsl)); color: white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);
+      }
+    }
+  }
+}
+
+// ---------------- LISTA DE ALERTAS ----------------
+.alerts-list {
+  display: flex; flex-direction: column; gap: 16px;
+}
+
+// TARJETA DE ALERTA (Estilos Directos - Sin @extend para evitar errores)
+.hud-card.alert-item {
+  // Base
+  background: linear-gradient(135deg, hsla(220, 60%, 10%, 0.9), hsla(220, 40%, 6%, 0.95));
+  backdrop-filter: blur(20px); border-radius: 20px; padding: 16px;
+  border: 1px solid rgba(255,255,255,0.05); position: relative; overflow: hidden;
+  transition: all 0.3s;
+
+  // Decoración Brackets
+  .hud-brackets {
+    position: absolute; inset: 0; pointer-events: none; opacity: 0.3;
+    &::before, &::after {
+      content: ''; position: absolute; width: 8px; height: 8px;
+      border: 1px solid rgba(255,255,255,0.3); transition: all 0.3s;
+    }
+    &::before { top: 0; left: 0; border-right: 0; border-bottom: 0; border-top-left-radius: 4px; }
+    &::after { bottom: 0; right: 0; border-left: 0; border-top: 0; border-bottom-right-radius: 4px; }
+  }
+
+  // Header interno
+  .alert-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+    
+    .meta-left {
+      display: flex; align-items: center; gap: 10px;
+      .status-badge {
+        font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 6px;
+        background: rgba(255,255,255,0.1); color: white; text-transform: uppercase;
+      }
+      .timestamp { font-size: 12px; color: #94a3b8; }
+    }
+    .icon-indicator .lucide-icon { width: 18px; height: 18px; opacity: 0.7; color: white; }
+  }
+
+  // Contenido
+  .reasons-list {
+    margin-bottom: 12px;
+    p { 
+      font-size: 13px; color: #e2e8f0; margin: 4px 0; display: flex; align-items: center; gap: 6px; 
+      .bullet { width: 14px; height: 14px; opacity: 0.7; }
+    }
+  }
+
+  // Vitales Pills
+  .vitals-row {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
+    .vital-pill {
+      font-size: 11px; padding: 4px 10px; border-radius: 100px;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      color: #cbd5e1; display: flex; align-items: center; gap: 4px;
+      .lucide-icon { width: 12px; height: 12px; }
+    }
+  }
+
+  // Botón Acción
+  .action-btn {
+    width: 100%; padding: 12px; border-radius: 12px; background: hsl(var(--health-normal));
+    border: none; color: hsl(var(--bg-hsl)); font-weight: 700; font-size: 13px;
+    &:active { opacity: 0.9; }
+  }
+
+  .handled-note {
+    font-size: 11px; text-align: center; color: hsl(var(--health-normal)); margin-top: 10px; font-style: italic;
+  }
+
+  // --- ESTADOS (Colores) ---
+  
+  // Riesgo (Rojo)
+  &.risk {
+    border-color: hsla(var(--health-risk), 0.4);
+    background: linear-gradient(135deg, hsla(var(--health-risk), 0.1), hsla(220, 60%, 10%, 0.9));
+    .status-badge { background: hsla(var(--health-risk), 0.2); color: hsl(var(--health-risk)); }
+    .icon-indicator { color: hsl(var(--health-risk)) !important; }
+    .reasons-list p .bullet { color: hsl(var(--health-risk)); }
+  }
+
+  // Advertencia (Amarillo)
+  &.warning {
+    border-color: hsla(var(--health-warning), 0.4);
+    background: linear-gradient(135deg, hsla(var(--health-warning), 0.1), hsla(220, 60%, 10%, 0.9));
+    .status-badge { background: hsla(var(--health-warning), 0.2); color: hsl(var(--health-warning)); }
+    .icon-indicator { color: hsl(var(--health-warning)) !important; }
+    .reasons-list p .bullet { color: hsl(var(--health-warning)); }
+  }
+
+  // Atendida (Gris/Transparente)
+  &.handled-item {
+    opacity: 0.6; filter: grayscale(0.5); border-color: rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.02);
+  }
+}
+
+// ---------------- ESTADOS DE CARGA / VACÍO ----------------
+.loading-state {
+  text-align: center; padding: 40px; color: #94a3b8; font-size: 12px;
+}
+
+.empty-state {
+  text-align: center; padding: 60px 20px;
+  .icon-circle {
+    width: 60px; height: 60px; background: rgba(255,255,255,0.05); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;
+    color: hsl(var(--health-normal));
+    .lucide-icon { width: 30px; height: 30px; }
+  }
+  h3 { color: white; font-size: 16px; margin: 0 0 6px; }
+  p { color: #64748b; font-size: 13px; margin: 0; line-height: 1.4; }
 }

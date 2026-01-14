@@ -1,106 +1,110 @@
-<ion-content class="ion-padding">
+<ion-content [fullscreen]="true" class="bg-gradient">
+  
   <div class="login-container">
 
-    <h1>Espejo Inteligente</h1>
-    <p class="subtitle">Monitoreo de salud</p>
+    <div class="header-logo">
+      <div class="icon-circle">
+        <ion-icon name="scan-outline"></ion-icon>
+      </div>
+      <h1>Espejo Inteligente</h1>
+      <p class="subtitle">Monitoreo de salud</p>
+    </div>
 
-    <!-- Selector Login/Registro -->
-    <ion-segment [value]="mode" (ionChange)="setMode($event.detail.value)">
-      <ion-segment-button value="login">
-        <ion-label>Ingresar</ion-label>
-      </ion-segment-button>
-      <ion-segment-button value="register">
-        <ion-label>Registrarse</ion-label>
-      </ion-segment-button>
-    </ion-segment>
+    <div class="glass-card main-card">
 
-    <div class="form">
+      <div class="tab-switch">
+        <div class="tab-btn" [class.active]="mode === 'login'" (click)="setMode('login')">
+          Ingresar
+        </div>
+        <div class="tab-btn" [class.active]="mode === 'register'" (click)="setMode('register')">
+          Registrarse
+        </div>
+        <div class="slider" [class.right]="mode === 'register'"></div>
+      </div>
 
-      <!-- ✅ Mensaje onboarding obligatorio (solo registro) -->
-      <div class="hint-box" *ngIf="mode === 'register'">
-        <ion-icon name="information-circle-outline"></ion-icon>
+      <div class="info-box glass-alert" *ngIf="mode === 'register'">
+        <ion-icon name="information-circle"></ion-icon>
         <div>
-          <strong>Después de crear tu cuenta</strong>
-          <p>te llevaremos a <b>Completar Perfil</b> (obligatorio) para usar el espejo.</p>
+          <strong>Paso importante</strong>
+          <p>Al crear tu cuenta deberás <b>Completar tu Perfil</b> para calibrar el espejo.</p>
         </div>
       </div>
 
-      <!-- Nombre solo en registro -->
-      <ion-item *ngIf="mode === 'register'">
-        <ion-input
-          label="Nombre"
-          labelPlacement="stacked"
-          [(ngModel)]="displayName"
-          autocomplete="name"
-          enterkeyhint="next"
-          inputmode="text">
-        </ion-input>
-      </ion-item>
+      <div class="form-content">
 
-      <ion-item>
-        <ion-input
-          label="Correo electrónico"
-          labelPlacement="stacked"
-          type="email"
-          [(ngModel)]="email"
-          autocomplete="email"
-          inputmode="email"
-          enterkeyhint="next">
-        </ion-input>
-      </ion-item>
+        <div class="input-group" *ngIf="mode === 'register'">
+          <label>Nombre</label>
+          <div class="glass-input-wrapper">
+            <ion-icon name="person-outline"></ion-icon>
+            <input 
+              type="text" 
+              [(ngModel)]="displayName" 
+              placeholder="Tu nombre"
+              autocomplete="name"
+              enterkeyhint="next">
+          </div>
+        </div>
 
-      <!-- ✅ Password con autocomplete correcto según modo -->
-      <ion-item *ngIf="mode === 'login'; else registerPass">
-        <ion-input
-          label="Contraseña"
-          labelPlacement="stacked"
-          type="password"
-          [(ngModel)]="password"
-          autocomplete="current-password"
-          enterkeyhint="go">
-        </ion-input>
-      </ion-item>
+        <div class="input-group">
+          <label>Correo electrónico</label>
+          <div class="glass-input-wrapper">
+            <ion-icon name="mail-outline"></ion-icon>
+            <input 
+              type="email" 
+              [(ngModel)]="email" 
+              placeholder="ejemplo@correo.com"
+              autocomplete="email"
+              inputmode="email"
+              enterkeyhint="next">
+          </div>
+        </div>
 
-      <ng-template #registerPass>
-        <ion-item>
-          <ion-input
-            label="Contraseña"
-            labelPlacement="stacked"
-            type="password"
-            [(ngModel)]="password"
-            autocomplete="new-password"
-            enterkeyhint="go">
-          </ion-input>
-        </ion-item>
-      </ng-template>
+        <div class="input-group">
+          <label>Contraseña</label>
+          <div class="glass-input-wrapper">
+            <ion-icon name="lock-closed-outline"></ion-icon>
+            
+            <input *ngIf="mode === 'login'"
+              type="password" 
+              [(ngModel)]="password" 
+              placeholder="••••••••"
+              autocomplete="current-password"
+              enterkeyhint="go">
 
-      <ion-text color="danger" *ngIf="error">
-        <p class="error">{{ error }}</p>
-      </ion-text>
+            <input *ngIf="mode === 'register'"
+              type="password" 
+              [(ngModel)]="password" 
+              placeholder="Mínimo 6 caracteres"
+              autocomplete="new-password"
+              enterkeyhint="go">
+          </div>
+        </div>
 
-      <ion-button
-        expand="block"
-        size="large"
-        (click)="submit()"
-        [disabled]="loading">
+        <div class="error-msg" *ngIf="error">
+          <ion-icon name="alert-circle"></ion-icon>
+          <span>{{ error }}</span>
+        </div>
 
-        <ion-spinner *ngIf="loading" name="crescent"></ion-spinner>
+        <p class="hint-text" *ngIf="mode === 'register'">
+          Tus datos médicos se almacenan de forma segura.
+        </p>
 
-        <span *ngIf="!loading">
-          {{ mode === 'login' ? 'Ingresar' : 'Crear cuenta y continuar' }}
-        </span>
+        <button class="magic-button" (click)="submit()" [disabled]="loading">
+          
+          <ion-spinner name="crescent" *ngIf="loading"></ion-spinner>
+          
+          <span *ngIf="!loading" style="display: flex; align-items: center; gap: 8px;">
+            {{ mode === 'login' ? 'INICIAR SESIÓN' : 'CREAR CUENTA' }}
+            <ion-icon name="arrow-forward-outline"></ion-icon>
+          </span>
 
-      </ion-button>
+        </button>
 
-      <!-- Notas -->
-      <p class="hint" *ngIf="mode === 'register'">
-        La contraseña debe tener mínimo 6 caracteres.
-      </p>
-
-      <p class="hint subtle" *ngIf="mode === 'register'">
-        Tus datos se usan para calibrar lecturas y alertas del espejo.
-      </p>
-
+      </div>
+    </div>
+    
+    <div class="footer-copy">
+      <p>Proyecto de Tesis 2026</p>
     </div>
 
   </div>

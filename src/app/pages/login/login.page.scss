@@ -1,27 +1,183 @@
-.hint-box{
-  display:flex;
-  gap:10px;
-  align-items:flex-start;
-  padding:12px 12px;
-  border-radius:14px;
-  margin: 10px 0 14px;
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.9);
+// 🌌 FONDO GLOBAL (Space Grey / Indigo)
+ion-content.bg-gradient {
+  --background: linear-gradient(180deg, #0f172a 0%, #1e1b4b 100%);
+}
 
-  ion-icon{
-    font-size:18px;
-    margin-top:2px;
-    opacity:0.9;
+.login-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100%;
+  padding: 20px;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+// 🟢 LOGO SUPERIOR
+.header-logo {
+  text-align: center;
+  margin-bottom: 30px;
+  margin-top: 20px;
+
+  .icon-circle {
+    width: 72px; height: 72px;
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+    box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
+    
+    ion-icon { font-size: 36px; color: white; }
   }
 
-  p{
-    margin:4px 0 0;
-    opacity:0.85;
-    line-height:1.25;
+  h1 { 
+    font-size: 26px; 
+    font-weight: 800; 
+    color: white; 
+    margin: 0; 
+    letter-spacing: -0.5px; 
+  }
+  .subtitle { 
+    color: #94a3b8; 
+    font-size: 15px; 
+    margin: 6px 0 0 0; 
   }
 }
 
-.hint.subtle{
-  opacity: 0.7;
-  margin-top: 6px;
+// 🧊 TARJETA DE CRISTAL (Contenedor principal)
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+// 🔁 SELECTOR DE PESTAÑAS (Estilo Toggle Deslizante)
+.tab-switch {
+  display: flex;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 14px;
+  padding: 4px;
+  margin-bottom: 24px;
+  position: relative;
+
+  .tab-btn {
+    flex: 1;
+    text-align: center;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #64748b;
+    z-index: 2;
+    cursor: pointer;
+    transition: color 0.3s ease;
+
+    &.active { color: white; }
+  }
+
+  // Fondo animado que se mueve
+  .slider {
+    position: absolute;
+    top: 4px; left: 4px; bottom: 4px; width: calc(50% - 4px);
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    z-index: 1;
+
+    &.right { transform: translateX(100%); left: 0; margin-left: 4px;}
+  }
+}
+
+// ℹ️ ALERTAS DE VIDRIO (Reemplaza a .hint-box antiguo)
+.info-box.glass-alert {
+  background: rgba(59, 130, 246, 0.15); // Azul transparente
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 16px;
+  padding: 14px;
+  display: flex; gap: 12px;
+  margin-bottom: 20px;
+
+  ion-icon { color: #60a5fa; font-size: 20px; margin-top: 2px; }
+  
+  div {
+    strong { display: block; color: white; font-size: 13px; margin-bottom: 4px; }
+    p { color: #bfdbfe; font-size: 12px; margin: 0; line-height: 1.4; }
+  }
+}
+
+// 📝 INPUTS MODERNOS
+.input-group {
+  margin-bottom: 18px;
+
+  label {
+    display: block; color: rgba(255, 255, 255, 0.6);
+    font-size: 12px; margin-bottom: 8px; margin-left: 4px; font-weight: 500;
+  }
+
+  .glass-input-wrapper {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 14px 16px;
+    display: flex; align-items: center; gap: 12px;
+    transition: all 0.2s;
+
+    &:focus-within {
+      border-color: #6366f1; // Indigo brillante al escribir
+      background: rgba(0, 0, 0, 0.3);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    }
+
+    ion-icon { color: #64748b; font-size: 20px; }
+    
+    input {
+      background: transparent; border: none; outline: none;
+      color: white; width: 100%; font-size: 16px; font-weight: 500;
+      &::placeholder { color: rgba(255, 255, 255, 0.25); }
+    }
+  }
+}
+
+// ⚠️ ERROR
+.error-msg {
+  display: flex; align-items: center; gap: 8px; justify-content: center;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 12px;
+  padding: 10px;
+  margin-bottom: 20px;
+
+  ion-icon { color: #fca5a5; }
+  span { color: #fca5a5; font-size: 13px; font-weight: 500; }
+}
+
+// 👇 HINT TEXT
+.hint-text {
+  text-align: center; color: rgba(255,255,255,0.3); font-size: 12px; margin-bottom: 24px;
+}
+
+// 🟣 BOTÓN NEÓN
+.magic-button {
+  width: 100%;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border: none; border-radius: 16px; padding: 18px;
+  color: white; font-weight: 700; font-size: 15px; letter-spacing: 0.5px;
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+  display: flex; justify-content: center; align-items: center; cursor: pointer;
+  transition: transform 0.1s;
+  
+  &:active { transform: scale(0.98); opacity: 0.9; }
+  &:disabled { opacity: 0.6; filter: grayscale(1); pointer-events: none; }
+}
+
+// 🦶 FOOTER
+.footer-copy {
+  text-align: center; margin-top: 30px;
+  p { font-size: 12px; color: rgba(255,255,255,0.2); }
 }
